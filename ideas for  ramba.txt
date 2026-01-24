@@ -1,0 +1,30 @@
+do we include an educational purpose NON
+grade it as familiarity (F) and complexity (C)
+
+
+-The game's main idea and name: 
+	2d game / top view / main theme arts / name: RAMBA
+
+-The game's main features (between 3-5 features)
+	each level revolves around a type of art (music / pottery ...)
+	you have to search for clues in each level to be able to pass it (detective work)
+	pixel art form for design
+	multiple maps
+
+-The game's target audience 
+	anyone who wants to solve puzzle regardless of their artistic background
+
+-Few example questions your classmates can ask you about the game
+	does it have a time constraint?
+	how can you win the game?
+	how easy is it to finish the game?
+
+Main idea: 
+- There is a main theme (example: arts/) and every level is a branch of that theme. And to win the game you have to finish all the levels.
+
+
+For Monday 
+	Present our group
+	main idea
+	show three main features of the idea
+	who is our target audience
