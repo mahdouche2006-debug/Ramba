@@ -4,74 +4,66 @@ import pygame
 class AnimateSprite(pygame.sprite.Sprite):
     def __init__(self, sprite_name):
         super().__init__()
-        self.image = pygame.image.load(f'{sprite_name}/{sprite_name}_stop_down.png')
-        self.animation = False
-        self.current_image = 0
-        self.walkLeft = [pygame.image.load('player/playerleft2.png'),
-                         pygame.image.load('player/player_stop_left.png'),
-                         pygame.image.load('player/playerleft1.png'),
-                         pygame.image.load('player/player_stop_left.png')]
-        self.walkRight = [pygame.image.load('player/playerright2.png'),
-                          pygame.image.load('player/player_stop_right.png'),
-                          pygame.image.load('player/playerright1.png'),
-                          pygame.image.load('player/player_stop_right.png')]
-        self.walkUp = [pygame.image.load('player/playerup1.png'),
-                       pygame.image.load('player/player_stop_up.png'),
-                       pygame.image.load('player/playerup2.png'),
-                       pygame.image.load('player/player_stop_up.png')]
-        self.walkDown = [pygame.image.load('player/playerdown1.png'),
-                         pygame.image.load('player/player_stop_down.png'),
-                         pygame.image.load('player/playerdown2.png'),
-                         pygame.image.load('player/player_stop_down.png')]
-        self.walkCount = 0
-        self.walkCount1 = 0
-        self.walkCount2 = 0
-        self.right = False
-        self.left = False
-        self.up = False
-        self.down = False
-        """
-        moving without animation
-        self.images = {
-            'down': pygame.image.load('player/playerdown1.png'),
-            'left': pygame.image.load('player/playerleft1.png'),
-            'right': pygame.image.load('player/playerright1.png'),
-            'up': pygame.image.load('player/playerup1.png')
+
+        # animation speed (bigger = slower)
+        self.animation_speed = 2
+
+        # load animations
+        self.animations = {
+            "left": [
+                self.load_image("player/playerleft2.png"),
+                self.load_image("player/player_stop_left.png"),
+                self.load_image("player/playerleft1.png"),
+                self.load_image("player/player_stop_left.png")
+            ],
+            "right": [
+                self.load_image("player/playerright2.png"),
+                self.load_image("player/player_stop_right.png"),
+                self.load_image("player/playerright1.png"),
+                self.load_image("player/player_stop_right.png")
+            ],
+            "up": [
+                self.load_image("player/playerup1.png"),
+                self.load_image("player/player_stop_up.png"),
+                self.load_image("player/playerup2.png"),
+                self.load_image("player/player_stop_up.png")
+            ],
+            "down": [
+                self.load_image("player/playerdown1.png"),
+                self.load_image("player/player_stop_down.png"),
+                self.load_image("player/playerdown2.png"),
+                self.load_image("player/player_stop_down.png")
+            ]
         }
-        """
 
-    def moving_right_left(self):
-        if self.walkCount + 1 >= 8:
-            self.walkCount = 0
 
-        if self.left:
-            self.image = self.walkLeft[self.walkCount//2]
-            self.walkCount += 1
+        # default state
+        self.direction = "down"
+        self.walking = False
+        self.frame_index = 0
 
-        elif self.right:
-            self.image = self.walkRight[self.walkCount//2]
-            self.walkCount += 1
-        else:
-            self.walkCount = 0
+        self.image = self.animations[self.direction][0]
+        self.rect = self.image.get_rect()
 
-    def moving_up(self):
-        if self.walkCount1 + 1 >= 8:
-            self.walkCount1 = 0
 
-        if self.up:
-            self.image = self.walkUp[self.walkCount1//2]
-            self.walkCount1 += 1
+    def animate(self):
+        if self.walking:
+            self.frame_index += 1
 
-        else:
-            self.walkCount1 = 0
+            frames = self.animations[self.direction]
+            max_frames = len(frames) * self.animation_speed
 
-    def moving_down(self):
-        if self.walkCount2 + 1 >= 8:
-            self.walkCount2 = 0
+            if self.frame_index >= max_frames:
+                self.frame_index = 0
 
-        if self.down:
-            self.image = self.walkDown[self.walkCount2//2]
-            self.walkCount2 += 1
+            self.image = frames[self.frame_index // self.animation_speed]
 
         else:
-            self.walkCount2 = 0
+            # standing still → first frame of direction
+            self.frame_index = 0
+            self.image = self.animations[self.direction][1]
+
+    def load_image(self, path):
+        image = pygame.image.load(path).convert()
+        image.set_colorkey((255, 255, 255))
+        return image

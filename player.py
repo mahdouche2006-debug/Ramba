@@ -25,3 +25,6 @@ class Player(animation.AnimateSprite):
         self.position = self.old_position
         self.rect.topleft = self.position
         self.feet.midbottom = self.rect.midbottom
+    
+    def is_on_stairs(self, stairs):
+        return self.feet.collidelist(stairs) > -1

@@ -28,68 +28,61 @@ class Game:
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
+        self.stairs = []
+        for obj in tmx_data.objects:
+            if obj.name == "stairs_above" or obj.name == "stairs_below":
+                self.stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=4)
         self.group.add(self.player)
 
     def handle_input(self):
-        pressed = pygame.key.get_pressed()
+        keys = pygame.key.get_pressed()
 
         dx = 0
         dy = 0
 
-        if pressed[pygame.K_UP]:
+        # reset walking state
+        self.player.walking = False
+
+        # vertical movement
+        if keys[pygame.K_UP]:
             dy -= 1
-            self.player.moving_up()
-            self.player.image.set_colorkey([255, 255, 255])
-            self.player.up = True
-            self.player.down = False
+            self.player.direction = "up"
+            self.player.walking = True
 
-        elif pressed[pygame.K_DOWN]:
+        elif keys[pygame.K_DOWN]:
             dy += 1
-            self.player.moving_down()
-            self.player.image.set_colorkey([255, 255, 255])
-            self.player.up = False
-            self.player.down = True
+            self.player.direction = "down"
+            self.player.walking = True
 
-        else:
-            self.player.up = False
-            self.player.down = False
-            self.player.walkCount1 = 0
-            if self.player.image == self.player.walkUp[0] or self.player.image == self.player.walkUp[2]:
-                self.player.image = self.player.walkUp[1]
-
-        if pressed[pygame.K_LEFT]:
+        # horizontal movement
+        if keys[pygame.K_LEFT]:
             dx -= 1
-            self.player.moving_right_left()
-            self.player.image.set_colorkey([255, 255, 255])
-            self.player.left = True
-            self.player.right = False
+            self.player.direction = "left"
+            self.player.walking = True
 
-        elif pressed[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT]:
             dx += 1
-            self.player.moving_right_left()
-            self.player.image.set_colorkey([255, 255, 255])
-            self.player.left = False
-            self.player.right = True
+            self.player.direction = "right"
+            self.player.walking = True
 
-        else:
-            self.player.right = False
-            self.player.left = False
-            self.player.walkCount = 0
-            if self.player.image == self.player.walkLeft[0] or self.player.image == self.player.walkLeft[2]:
-                self.player.image = self.player.walkLeft[1]
-            elif self.player.image == self.player.walkRight[0] or self.player.image == self.player.walkRight[2]:
-                self.player.image = self.player.walkRight[1]
-
+        # normalize diagonal movement
         direction = pygame.math.Vector2(dx, dy)
-
         if direction.length() > 0:
             direction = direction.normalize()
 
+        # save old position (for collisions)
+        self.player.save_location()
+
+        # apply movement
         self.player.position[0] += direction.x * self.player.speed
         self.player.position[1] += direction.y * self.player.speed
+
+        # update animation
+        self.player.animate()
+
 
     def check_collision(self):
 
@@ -142,6 +135,7 @@ class Game:
 
     def run(self):
         clock = pygame.time.Clock()
+        fps = 30
 
         running = True
         while running:
@@ -162,6 +156,6 @@ class Game:
                     if event.key == pygame.K_q:    
                         running = False
                 
-            clock.tick(30)
+            clock.tick(fps)
 
         pygame.quit()
