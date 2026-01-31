@@ -28,3 +28,10 @@ For Monday
 	main idea
 	show three main features of the idea
 	who is our target audience
+
+for week 4:
+	add timer
+	think about the mecanics of the level
+	search how to pick up stuff
+	then search how to destroy stuff
+	see the narrative stuff on moodle and try to impliment it on the game
