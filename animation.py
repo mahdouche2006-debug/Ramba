@@ -6,7 +6,7 @@ class AnimateSprite(pygame.sprite.Sprite):
         super().__init__()
 
         # animation speed (bigger = slower)
-        self.animation_speed = 2
+        self.animation_speed = 5
 
         # load animations
         self.animations = {

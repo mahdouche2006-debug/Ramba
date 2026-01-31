@@ -34,7 +34,7 @@ class Game:
                 self.stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
         # dessiner le groupe de calque
-        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=4)
+        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
         self.group.add(self.player)
 
     def handle_input(self):
@@ -104,7 +104,7 @@ class Game:
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
         # dessiner le groupe de calque
-        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=4)
+        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
         self.group.add(self.player)
 
         # definir le rectengle de colision pour sortir dans la maison
@@ -135,10 +135,11 @@ class Game:
 
     def run(self):
         clock = pygame.time.Clock()
-        fps = 30
+        fps = 60
 
         running = True
         while running:
+            
 
             self.player.save_location()
             self.handle_input()
@@ -146,6 +147,7 @@ class Game:
             self.group.center(self.player.rect)
             self.group.draw(self.screen)
             self.check_collision()
+            
             pygame.display.flip()
 
             for event in pygame.event.get():
@@ -155,7 +157,9 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:    
                         running = False
-                
+            
+            
+
             clock.tick(fps)
 
         pygame.quit()
