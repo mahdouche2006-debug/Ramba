@@ -99,13 +99,18 @@ class Game:
         self.player.animate()
 
         # pick up items with the e key
-        if keys[pygame.K_e] and self.check_collision(self.items):
-            if self.apple.rect.x + self.apple.rect.width > self.player.feet.x > self.apple.rect.x - self.apple.rect.width and \
-               self.apple.rect.y + self.apple.rect.width > self.player.feet.y > self.apple.rect.y:
-                self.group.remove(self.apple)
-                self.items.pop(0)
+        if keys[pygame.K_e] and self.check_collision_with_list(self.items):
+            if self.chek_collision_with_item(self.apple):
+                self.remove_item(self.apple)
+    
+    def remove_item(self, item):
+        self.group.remove(item)
+        self.items.pop(0)
+    
+    def check_collision_with_item(self, item):
+        self.player.feet.colliderect(item.rect)
 
-    def check_collision(self, obj):
+    def check_collision_with_list(self, obj):
         # verification collision
         if self.player.feet.collidelist(obj) > -1:
             return True
@@ -165,10 +170,10 @@ class Game:
             self.group.update()
             self.group.center(self.player.rect)
             self.group.draw(self.screen)
-            if self.check_collision(self.walls):
+            if self.check_collision_with_list(self.walls):
                 self.player.move_back()
             
-            if self.check_collision(self.items):
+            if self.check_collision_with_list(self.items):
                 self.screen.blit(self.e_image, (20,20))
                 print("player " , self.player.position[0], self.player.position[1])
                 print("apple " , self.apple.rect.x , self.apple.rect.y)
