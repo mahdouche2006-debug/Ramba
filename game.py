@@ -3,6 +3,7 @@ import pytmx
 import pyscroll
 
 from player import Player
+from item import Item
 
 class Game:
     def __init__(self):
@@ -19,22 +20,36 @@ class Game:
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
         self.player = Player(player_position.x, player_position.y)
-        
+
+        # generer une pomme
+        apple_position = tmx_data.get_object_by_name("apple")
+        self.apple = Item("apple", apple_position.x, apple_position.y)
+
+        # the e to pick things up
+        self.e_image = pygame.image.load("images/e.png")
+
         self.map = "world"
 
         self.walls = []
+        self.stairs = []
+        self.items = []
+        self.items_names = []
 
         for obj in tmx_data.objects:
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-
-        self.stairs = []
-        for obj in tmx_data.objects:
+            
             if obj.name == "stairs_above" or obj.name == "stairs_below":
-                self.stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+                self.stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))   
+
+            if obj.type == "item":
+                self.items.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+                self.items_names.append(obj.name)
+
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
+        self.group.add(self.apple)
         self.group.add(self.player)
 
     def handle_input(self):
@@ -83,13 +98,17 @@ class Game:
         # update animation
         self.player.animate()
 
+        # pick up items with the e key
+        if keys[pygame.K_e] and self.check_collision(self.items):
+            if self.apple.rect.x + self.apple.rect.width > self.player.feet.x > self.apple.rect.x - self.apple.rect.width and \
+               self.apple.rect.y + self.apple.rect.width > self.player.feet.y > self.apple.rect.y:
+                self.group.remove(self.apple)
+                self.items.pop(0)
 
-    def check_collision(self):
-
+    def check_collision(self, obj):
         # verification collision
-        for sprite in self.group.sprites():
-            if self.player.feet.collidelist(self.walls) > -1:
-                self.player.move_back()
+        if self.player.feet.collidelist(obj) > -1:
+            return True
 
     """def switch_house(self, level):
         tmx_data = pytmx.util_pygame.load_pygame(f'{level}.tmx')
@@ -146,7 +165,14 @@ class Game:
             self.group.update()
             self.group.center(self.player.rect)
             self.group.draw(self.screen)
-            self.check_collision()
+            if self.check_collision(self.walls):
+                self.player.move_back()
+            
+            if self.check_collision(self.items):
+                self.screen.blit(self.e_image, (20,20))
+                print("player " , self.player.position[0], self.player.position[1])
+                print("apple " , self.apple.rect.x , self.apple.rect.y)
+
             
             pygame.display.flip()
 
