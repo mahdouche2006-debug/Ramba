@@ -24,6 +24,8 @@ class Game:
         # generer une pomme
         apple_position = tmx_data.get_object_by_name("apple")
         self.apple = Item("apple", apple_position.x, apple_position.y)
+        apple2_position = tmx_data.get_object_by_name("apple2")
+        self.apple2 = Item("apple", apple2_position.x, apple2_position.y)
 
         # the e to pick things up
         self.e_image = pygame.image.load("images/e.png")
@@ -33,7 +35,6 @@ class Game:
         self.walls = []
         self.stairs = []
         self.items = []
-        self.items_names = []
 
         for obj in tmx_data.objects:
             if obj.type == "obj":
@@ -44,12 +45,12 @@ class Game:
 
             if obj.type == "item":
                 self.items.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-                self.items_names.append(obj.name)
 
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
         self.group.add(self.apple)
+        self.group.add(self.apple2)
         self.group.add(self.player)
 
     def handle_input(self):
@@ -100,20 +101,23 @@ class Game:
 
         # pick up items with the e key
         if keys[pygame.K_e] and self.check_collision_with_list(self.items):
-            if self.chek_collision_with_item(self.apple):
+            if self.check_collision_with_item(self.apple):
                 self.remove_item(self.apple)
+            
+            if self.check_collision_with_item(self.apple2):
+                self.remove_item(self.apple2)
     
     def remove_item(self, item):
         self.group.remove(item)
-        self.items.pop(0)
+        self.items.remove(item.rect)
     
     def check_collision_with_item(self, item):
-        self.player.feet.colliderect(item.rect)
+        return self.player.feet.colliderect(item.rect)
 
     def check_collision_with_list(self, obj):
         # verification collision
-        if self.player.feet.collidelist(obj) > -1:
-            return True
+        return self.player.feet.collidelist(obj) > -1
+            
 
     """def switch_house(self, level):
         tmx_data = pytmx.util_pygame.load_pygame(f'{level}.tmx')
@@ -175,9 +179,7 @@ class Game:
             
             if self.check_collision_with_list(self.items):
                 self.screen.blit(self.e_image, (20,20))
-                print("player " , self.player.position[0], self.player.position[1])
-                print("apple " , self.apple.rect.x , self.apple.rect.y)
-
+                
             
             pygame.display.flip()
 

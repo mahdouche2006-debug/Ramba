@@ -6,3 +6,4 @@ class Item(pygame.sprite.Sprite):
         self.image = pygame.image.load(f"images/{item}.png").convert_alpha()
         self.image = pygame.transform.smoothscale(self.image, (16, 16))
         self.rect = self.image.get_rect(topleft=(x, y))
+        self.position = [x, y]
