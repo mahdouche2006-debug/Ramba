@@ -4,6 +4,7 @@ import pyscroll
 
 from player import Player
 from item import Item
+from level1 import Level1
 
 class Game:
     def __init__(self):
@@ -30,18 +31,22 @@ class Game:
         # the e to pick things up
         self.e_image = pygame.image.load("images/e.png")
 
-        self.map = "world"
+        self.map = "level1"
 
         self.walls = []
-        self.stairs = []
+        self.side_stairs = []
+        self.front_stairs = []
         self.items = []
 
         for obj in tmx_data.objects:
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
             
-            if obj.name == "stairs_above" or obj.name == "stairs_below":
-                self.stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))   
+            if obj.type == "side_stairs":
+                self.side_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height)) 
+
+            if obj.type == "front_stairs":
+                self.front_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))  
 
             if obj.type == "item":
                 self.items.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
@@ -58,6 +63,7 @@ class Game:
 
         dx = 0
         dy = 0
+        stairs_deviation = 0.33
 
         # reset walking state
         self.player.walking = False
@@ -67,11 +73,17 @@ class Game:
             dy -= 1
             self.player.direction = "up"
             self.player.walking = True
+            
+            if self.check_collision_with_list(self.side_stairs):
+                dy += stairs_deviation
 
         elif keys[pygame.K_DOWN]:
             dy += 1
             self.player.direction = "down"
             self.player.walking = True
+
+            if self.check_collision_with_list(self.side_stairs):
+                dy -= stairs_deviation
 
         # horizontal movement
         if keys[pygame.K_LEFT]:
@@ -79,10 +91,18 @@ class Game:
             self.player.direction = "left"
             self.player.walking = True
 
+            if self.check_collision_with_list(self.side_stairs):
+                dy += stairs_deviation
+                dx += stairs_deviation
+
         elif keys[pygame.K_RIGHT]:
             dx += 1
             self.player.direction = "right"
             self.player.walking = True
+
+            if self.check_collision_with_list(self.side_stairs):
+                dy -= stairs_deviation
+                dx -= stairs_deviation
 
         # normalize diagonal movement
         direction = pygame.math.Vector2(dx, dy)
@@ -166,23 +186,29 @@ class Game:
         fps = 60
 
         running = True
+        level1 = Level1()
         while running:
             
+            if self.map == "world":
 
-            self.player.save_location()
-            self.handle_input()
-            self.group.update()
-            self.group.center(self.player.rect)
-            self.group.draw(self.screen)
-            if self.check_collision_with_list(self.walls):
-                self.player.move_back()
-            
-            if self.check_collision_with_list(self.items):
-                self.screen.blit(self.e_image, (20,20))
+                self.player.save_location()
+                self.handle_input()
+                self.group.update()
+                self.group.center(self.player.rect)
+                self.group.draw(self.screen)
                 
-            
-            pygame.display.flip()
+                if self.check_collision_with_list(self.walls):
+                    self.player.move_back()
+                
+                if self.check_collision_with_list(self.items):
+                    self.screen.blit(self.e_image, (20,20))
+                
+                pygame.display.flip()
 
+            elif self.map == "level1":
+                level1.run()
+
+            # event handeling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
