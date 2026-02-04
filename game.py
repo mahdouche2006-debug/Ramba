@@ -31,12 +31,18 @@ class Game:
         # the e to pick things up
         self.e_image = pygame.image.load("images/e.png")
 
-        self.map = "level1"
+        # tunnel creation
+        self.tunnel1 = tmx_data.get_object_by_name("tunnel1")
+        self.tunnel2 = tmx_data.get_object_by_name("tunnel2")
+
+        self.map = "world"
 
         self.walls = []
         self.side_stairs = []
         self.front_stairs = []
         self.items = []
+        self.doors = []
+        self.tunnels = []
 
         for obj in tmx_data.objects:
             if obj.type == "obj":
@@ -50,7 +56,12 @@ class Game:
 
             if obj.type == "item":
                 self.items.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+            
+            if obj.type == "door":
+                self.doors.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
+            if obj.type == "tunnel":
+                self.tunnels.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
@@ -133,53 +144,16 @@ class Game:
     
     def check_collision_with_item(self, item):
         return self.player.feet.colliderect(item.rect)
+    
+    def check_collision_with_door(self, item):
+        return self.player.feet.colliderect(item)
+
+    def check_collision_with_tunnel(self, item):
+        return self.player.feet.colliderect(item)
 
     def check_collision_with_list(self, obj):
         # verification collision
         return self.player.feet.collidelist(obj) > -1
-            
-
-    """def switch_house(self, level):
-        tmx_data = pytmx.util_pygame.load_pygame(f'{level}.tmx')
-        map_data = pyscroll.data.TiledMapData(tmx_data)
-        map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
-        map_layer.zoom = 3
-
-        # definir une liste qui va stocker les rectangles de collision
-        self.walls = []
-        for obj in tmx_data.objects:
-            if obj.type == "collision":
-                self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-
-        # dessiner le groupe de calque
-        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
-        self.group.add(self.player)
-
-        # definir le rectengle de colision pour sortir dans la maison
-        exit_level = tmx_data.get_object_by_name(f'exit_{level}')
-        self.enter_level_rect = pygame.Rect(exit_level.x, exit_level.y, exit_level.width, exit_level.height)
-
-        spawn_level_point = tmx_data.get_object_by_name(f'spawn_{level}')
-        self.player.position[0] = spawn_level_point.x
-        self.player.position[1] = spawn_level_point.y - 20
-
-    def update(self):
-        self.group.update()
-
-        # verifier l'entrer dans la maison
-        if self.map == 'world' and self.player.feet.colliderect(self.enter_level_rect):
-            self.switch_house("cave")
-            self.map = 'cave'
-
-        # verifier l'entrer dans la maison
-        if self.map == 'cave' and self.player.feet.colliderect(self.enter_level_rect):
-            self.switch_house("main map demo")
-            self.map = 'world'
-
-        # verification collision
-        for sprite in self.group.sprites():
-            if self.player.feet.collidelist(self.walls) > -1:
-                self.player.move_back()"""
 
     def run(self):
         clock = pygame.time.Clock()
@@ -202,6 +176,17 @@ class Game:
                 
                 if self.check_collision_with_list(self.items):
                     self.screen.blit(self.e_image, (20,20))
+
+                if self.check_collision_with_door(self.doors[0]):
+                    self.map = "level1"
+
+                if self.check_collision_with_tunnel(self.tunnels[0]):
+                    self.player.position[0] = self.tunnel2.x
+                    self.player.position[1] = self.tunnel2.y - 54
+                
+                if self.check_collision_with_tunnel(self.tunnels[1]):
+                    self.player.position[0] = self.tunnel1.x
+                    self.player.position[1] = self.tunnel1.y + 32
                 
                 pygame.display.flip()
 

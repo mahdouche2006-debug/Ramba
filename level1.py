@@ -4,6 +4,7 @@ import pyscroll
 
 from player import Player
 from item import Item
+import game
 
 class Level1:
     def __init__(self):
@@ -15,10 +16,8 @@ class Level1:
         tmx_data = pytmx.util_pygame.load_pygame('one chamber.tmx')
         map_data = pyscroll.data.TiledMapData(tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
-        map_layer.zoom = 5
+        map_layer.zoom = 3
 
-        self.map = "level1"
-    
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
         self.player = Player(player_position.x, player_position.y)
@@ -144,8 +143,7 @@ class Level1:
         
         pygame.display.flip()
         
+        # return to world when all items are collected
         if self.items_collected == 2:
-            return "world"
-
-        
-
+            game.Game().map = "world"
+            game.Game().run() # Return to world map (adjust as needed)

@@ -37,8 +37,8 @@ for week 4:
 	see the narrative stuff on moodle and try to impliment it on the game
 
 for week 5:
-	open the mario file fil moodle nahi mario ou rodha brown
-	create a level class with it´s own run method
+	open the mario file fil moodle nahi mario ou rodha brown ok
+	create a level class with it´s own run method ok
 	timer 
 	dialogue 
 	score animation
