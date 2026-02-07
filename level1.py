@@ -128,8 +128,25 @@ class Level1:
         text = font.render(f"{self.items_collected}/10", True, (255, 255, 255))
         self.screen.blit(text, (self.screen.get_width()*92/100, 0))
 
+    def winning_the_level(self):
+        paused = True
+        font = pygame.font.SysFont(None, 48)
+        text = font.render("You won the level...", True, (255, 0, 0))
+        text_rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
+        while paused:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    paused = False
+                elif event.type == pygame.KEYDOWN:
+                    paused = False
+
+            self.screen.fill((0, 0, 0))
+            self.screen.blit(text, text_rect)
+            pygame.display.flip()
+            pygame.time.delay(2000)  # Affiche le message pendant 2 secondes
+            paused = False
+
     def run(self):
-        
         self.player.save_location()
         self.handle_input()
 
@@ -141,9 +158,8 @@ class Level1:
         if self.check_collision_with_list(self.items):
             self.screen.blit(self.e_image, (20,20))
         
-        pygame.display.flip()
-        
         # return to world when all items are collected
         if self.items_collected == 2:
+            self.winning_the_level()
             game.Game().map = "world"
             game.Game().run() # Return to world map (adjust as needed)

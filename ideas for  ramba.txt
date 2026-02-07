@@ -44,3 +44,5 @@ for week 5:
 	score animation
 	distractble objects
 	dropping apple from obj
+
+change the opacity of the screen for the transition
