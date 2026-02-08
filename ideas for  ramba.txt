@@ -42,7 +42,7 @@ for week 5:
 	timer 
 	dialogue 
 	score animation
-	distractble objects
+	distructable objects
 	dropping apple from obj
 
-change the opacity of the screen for the transition
+change the opacity of the screen for the transition ok

@@ -22,12 +22,6 @@ class Game:
         player_position = tmx_data.get_object_by_name("player")
         self.player = Player(player_position.x, player_position.y)
 
-        # generer une pomme
-        apple_position = tmx_data.get_object_by_name("apple")
-        self.apple = Item("apple", apple_position.x, apple_position.y)
-        apple2_position = tmx_data.get_object_by_name("apple2")
-        self.apple2 = Item("apple", apple2_position.x, apple2_position.y)
-
         # the e to pick things up
         self.e_image = pygame.image.load("images/e.png")
 
@@ -35,12 +29,12 @@ class Game:
         self.tunnel1 = tmx_data.get_object_by_name("tunnel1")
         self.tunnel2 = tmx_data.get_object_by_name("tunnel2")
 
+        # by default world
         self.map = "world"
 
         self.walls = []
         self.side_stairs = []
         self.front_stairs = []
-        self.items = []
         self.doors = []
         self.tunnels = []
 
@@ -53,9 +47,6 @@ class Game:
 
             if obj.type == "front_stairs":
                 self.front_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))  
-
-            if obj.type == "item":
-                self.items.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
             
             if obj.type == "door":
                 self.doors.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
@@ -65,8 +56,6 @@ class Game:
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
-        self.group.add(self.apple)
-        self.group.add(self.apple2)
         self.group.add(self.player)
 
     def handle_input(self):
@@ -85,7 +74,7 @@ class Game:
             self.player.direction = "up"
             self.player.walking = True
             
-            if self.check_collision_with_list(self.side_stairs):
+            if self.check_collision_with_list(self.front_stairs):
                 dy += stairs_deviation
 
         elif keys[pygame.K_DOWN]:
@@ -93,7 +82,7 @@ class Game:
             self.player.direction = "down"
             self.player.walking = True
 
-            if self.check_collision_with_list(self.side_stairs):
+            if self.check_collision_with_list(self.front_stairs):
                 dy -= stairs_deviation
 
         # horizontal movement
@@ -105,7 +94,7 @@ class Game:
             if self.check_collision_with_list(self.side_stairs):
                 dy += stairs_deviation
                 dx += stairs_deviation
-
+                
         elif keys[pygame.K_RIGHT]:
             dx += 1
             self.player.direction = "right"
@@ -129,21 +118,6 @@ class Game:
 
         # update animation
         self.player.animate()
-
-        # pick up items with the e key
-        if keys[pygame.K_e] and self.check_collision_with_list(self.items):
-            if self.check_collision_with_item(self.apple):
-                self.remove_item(self.apple)
-            
-            if self.check_collision_with_item(self.apple2):
-                self.remove_item(self.apple2)
-    
-    def remove_item(self, item):
-        self.group.remove(item)
-        self.items.remove(item.rect)
-    
-    def check_collision_with_item(self, item):
-        return self.player.feet.colliderect(item.rect)
     
     def check_collision_with_door(self, item):
         return self.player.feet.colliderect(item)
@@ -155,11 +129,31 @@ class Game:
         # verification collision
         return self.player.feet.collidelist(obj) > -1
     
+    def fade_in_to_black(self):
+        fade = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
+        fade.fill((0, 0, 0))
+        for alpha in range(0, 200):
+            fade.set_alpha(alpha)
+            self.screen.blit(fade, (0, 0))
+            pygame.display.update()
+            pygame.time.delay(5)
+
+    def fade_out_from_black(self):
+        fade = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
+        fade.fill((0, 0, 0))
+        for alpha in range(200, -1, -1):
+            fade.set_alpha(alpha)
+            self.screen.blit(fade, (0, 0))
+            pygame.display.update()
+            pygame.time.delay(5)
+
     def enter_the_tunnel(self):
         paused = True
         font = pygame.font.SysFont(None, 48)
         text = font.render("Entering the tunnel...", True, (255, 255, 255))
         text_rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
+
+        self.fade_in_to_black()
 
         while paused:
             for event in pygame.event.get():
@@ -178,12 +172,17 @@ class Game:
             pygame.display.flip()
             pygame.time.delay(2000)  # Pause for 2 seconds
             paused = False
+        
+        self.fade_out_from_black()
 
     def enter_level1(self):
         paused = True 
         font = pygame.font.SysFont(None, 48)
         text = font.render("Entering the level1...", True, (255, 0, 0))
         text_rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
+        
+        self.fade_in_to_black()
+        
         while paused:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -215,9 +214,6 @@ class Game:
                 
                 if self.check_collision_with_list(self.walls):
                     self.player.move_back()
-                
-                if self.check_collision_with_list(self.items):
-                    self.screen.blit(self.e_image, (20,20))
 
                 if self.check_collision_with_door(self.doors[0]):
                     self.map = "level1"
@@ -247,7 +243,6 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:    
                         running = False
-            
             
 
             clock.tick(fps)

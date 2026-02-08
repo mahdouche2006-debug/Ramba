@@ -1,10 +1,11 @@
 import pygame
 import pytmx
 import pyscroll
+import game
 
 from player import Player
 from item import Item
-import game
+
 
 class Level1:
     def __init__(self):
@@ -21,32 +22,28 @@ class Level1:
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
         self.player = Player(player_position.x, player_position.y)
+        
+        # dessiner le groupe de calque
+        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
+        self.group.add(self.player)
 
-        # generer une pomme
-        apple_position = tmx_data.get_object_by_name("apple")
-        self.apple = Item("apple", apple_position.x, apple_position.y)
-        apple2_position = tmx_data.get_object_by_name("apple2")
-        self.apple2 = Item("apple", apple2_position.x, apple2_position.y)
-
-        # the e to pick things up
-        self.e_image = pygame.image.load("images/e.png")
-
-        # the lists of interactable objects
+        self.e_image = pygame.image.load("images/e.png").convert_alpha()
+        
+        # lists
         self.walls = []
         self.items = []
 
         for obj in tmx_data.objects:
+
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
-            if obj.type == "item":
-                self.items.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+            elif obj.type == "item":
+                has_item = (obj.name == "wood_chest")
+                item = Item(obj.name, obj.x, obj.y, has_item)
 
-        # dessiner le groupe de calque
-        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
-        self.group.add(self.apple)
-        self.group.add(self.apple2)
-        self.group.add(self.player)
+                self.items.append(item)
+                self.group.add(item)        
 
         # counter for items collected
         self.items_collected = 0
@@ -96,27 +93,16 @@ class Level1:
 
         # update animation
         self.player.animate()
-
-        # pick up items with the e key
-        if keys[pygame.K_e] and self.check_collision_with_list(self.items):
-            if self.check_collision_with_item(self.apple):
-                self.remove_item(self.apple)
-                self.items_collected += 1
-            
-            if self.check_collision_with_item(self.apple2):
-                self.remove_item(self.apple2)
-                self.items_collected += 1
     
     def remove_item(self, item):
         self.group.remove(item)
-        self.items.remove(item.rect)
-    
-    def check_collision_with_item(self, item):
-        return self.player.feet.colliderect(item.rect)
+        self.items.remove(item)
 
-    def check_collision_with_list(self, obj):
-        # verification collision
-        return self.player.feet.collidelist(obj) > -1
+    def get_colliding_item(self):
+        for item in self.items:
+            if self.player.feet.colliderect(item.rect):
+                return item
+        return None
     
     def get_dynamic_font(self):
         font_size = int(self.screen.get_height() // 20)
@@ -140,7 +126,6 @@ class Level1:
                 elif event.type == pygame.KEYDOWN:
                     paused = False
 
-            self.screen.fill((0, 0, 0))
             self.screen.blit(text, text_rect)
             pygame.display.flip()
             pygame.time.delay(2000)  # Affiche le message pendant 2 secondes
@@ -155,8 +140,31 @@ class Level1:
         self.group.draw(self.screen)
         self.draw_counter()
 
-        if self.check_collision_with_list(self.items):
-            self.screen.blit(self.e_image, (20,20))
+        if self.get_colliding_item():
+            self.screen.blit(self.e_image, (20, 20))
+
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                pygame.quit()
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+                item = self.get_colliding_item()
+
+                if item:
+                    if item.name == "apple":
+                        self.items_collected += 1
+                        self.remove_item(item)
+
+                    elif item.name == "wood_chest":
+                        if item.has_item:
+                            new_apple = Item("apple", item.rect.x, item.rect.y)
+                            self.items.append(new_apple)
+                            self.group.add(new_apple)
+
+                        self.remove_item(item)
+
         
         # return to world when all items are collected
         if self.items_collected == 2:
