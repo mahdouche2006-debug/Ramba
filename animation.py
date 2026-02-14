@@ -33,6 +33,24 @@ class AnimateSprite(pygame.sprite.Sprite):
                 self.load_image("player/player_stop_down.png"),
                 self.load_image("player/playerdown2.png"),
                 self.load_image("player/player_stop_down.png")
+            ],
+            "attack_right": [
+                self.load_image("player/player_strike_side 1.png"),
+                self.load_image("player/player_strike_side 2.png"),
+                self.load_image("player/player_strike_side 3.png")
+            ],
+            "attack_left": [
+                pygame.transform.flip(self.load_image("player/player_strike_side 1.png"), True, False),
+                pygame.transform.flip(self.load_image("player/player_strike_side 2.png"), True, False),
+                pygame.transform.flip(self.load_image("player/player_strike_side 3.png"), True, False),
+            ],
+            "attack_up": [
+                self.load_image("player/player_strike_up 1.png"),
+                self.load_image("player/player_strike_up 2.png"),
+            ],
+            "attack_down": [
+                self.load_image("player/player_strike_down 1.png"),
+                self.load_image("player/player_strike_down 2.png"),
             ]
         }
 
@@ -41,16 +59,36 @@ class AnimateSprite(pygame.sprite.Sprite):
         self.direction = "down"
         self.walking = False
         self.frame_index = 0
+        self.attacking = False
+        self.attack_finished = False
 
         self.image = self.animations[self.direction][0]
         self.rect = self.image.get_rect()
 
 
     def animate(self):
-        if self.walking:
-            self.frame_index += 1
 
+        # 🔴 ATTACK animation has priority
+        if self.attacking:
+            frames = self.animations[f"attack_{self.direction}"]
+
+            self.frame_index += 1
+            max_frames = len(frames) * self.animation_speed
+
+            if self.frame_index >= max_frames:
+                self.frame_index = 0
+                self.attacking = False   # stop attacking after animation
+                return
+
+            self.image = frames[self.frame_index // self.animation_speed]
+            return
+
+
+        # 🟢 WALK animation
+        if self.walking:
             frames = self.animations[self.direction]
+
+            self.frame_index += 1
             max_frames = len(frames) * self.animation_speed
 
             if self.frame_index >= max_frames:
@@ -58,8 +96,8 @@ class AnimateSprite(pygame.sprite.Sprite):
 
             self.image = frames[self.frame_index // self.animation_speed]
 
+        # ⚪ IDLE
         else:
-            # standing still → first frame of direction
             self.frame_index = 0
             self.image = self.animations[self.direction][1]
 

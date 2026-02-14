@@ -5,6 +5,7 @@ import game
 
 from player import Player
 from item import Item
+from timer import CountdownTimer
 
 
 class Level1:
@@ -25,7 +26,7 @@ class Level1:
         
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
-        self.group.add(self.player)
+        self.group.add(self.player) 
 
         self.e_image = pygame.image.load("images/e.png").convert_alpha()
         
@@ -43,10 +44,18 @@ class Level1:
                 item = Item(obj.name, obj.x, obj.y, has_item)
 
                 self.items.append(item)
-                self.group.add(item)        
+                self.group.add(item)     
+        
+        self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
 
         # counter for items collected
         self.items_collected = 0
+
+        # timer creation
+        self.timer = CountdownTimer(10)
+
+        # font
+        self.font = pygame.font.SysFont(None, 70)
         
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -54,10 +63,21 @@ class Level1:
         dx = 0
         dy = 0
 
-        # reset walking state
+        # prevent movement while attacking
+        if self.player.attacking:
+            self.player.animate()
+            return
+
         self.player.walking = False
 
-        # vertical movement
+        # attack key
+        if keys[pygame.K_e]:
+            self.player.attacking = True
+            self.player.frame_index = 0
+            self.player.animate()
+            return
+
+        # movement
         if keys[pygame.K_UP]:
             dy -= 1
             self.player.direction = "up"
@@ -68,7 +88,6 @@ class Level1:
             self.player.direction = "down"
             self.player.walking = True
 
-        # horizontal movement
         if keys[pygame.K_LEFT]:
             dx -= 1
             self.player.direction = "left"
@@ -79,45 +98,35 @@ class Level1:
             self.player.direction = "right"
             self.player.walking = True
 
-        # normalize diagonal movement
         direction = pygame.math.Vector2(dx, dy)
+
         if direction.length() > 0:
             direction = direction.normalize()
 
-        # save old position (for collisions)
         self.player.save_location()
 
-        # apply movement
         self.player.position[0] += direction.x * self.player.speed
         self.player.position[1] += direction.y * self.player.speed
 
-        # update animation
         self.player.animate()
     
     def remove_item(self, item):
         self.group.remove(item)
         self.items.remove(item)
 
-    def get_colliding_item(self):
-        for item in self.items:
+    def get_colliding_item(self, list):
+        for item in list:
             if self.player.feet.colliderect(item.rect):
                 return item
         return None
     
-    def get_dynamic_font(self):
-        font_size = int(self.screen.get_height() // 20)
-        font_size = max(12, min(font_size, 72))  # Limite la taille de la police entre 12 et 72
-        return pygame.font.SysFont("Arial", font_size)
-    
     def draw_counter(self):
-        font = self.get_dynamic_font()
-        text = font.render(f"{self.items_collected}/10", True, (255, 255, 255))
+        text = self.font.render(f"{self.items_collected}/10", True, (255, 255, 255))
         self.screen.blit(text, (self.screen.get_width()*92/100, 0))
 
-    def winning_the_level(self):
+    def ending_the_level(self, message):
         paused = True
-        font = pygame.font.SysFont(None, 48)
-        text = font.render("You won the level...", True, (255, 0, 0))
+        text = self.font.render(message, True, (255, 255, 255))
         text_rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
         while paused:
             for event in pygame.event.get():
@@ -140,8 +149,11 @@ class Level1:
         self.group.draw(self.screen)
         self.draw_counter()
 
-        if self.get_colliding_item():
-            self.screen.blit(self.e_image, (20, 20))
+        self.timer.update()
+        self.timer.draw(self.screen)
+
+        if self.get_colliding_item(self.items):
+            self.screen.blit(self.e_image, (self.screen.get_width() - self.e_image.get_width(), self.screen.get_height() - self.e_image.get_height()))
 
 
         for event in pygame.event.get():
@@ -150,7 +162,7 @@ class Level1:
                 pygame.quit()
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
-                item = self.get_colliding_item()
+                item = self.get_colliding_item(self.items)
 
                 if item:
                     if item.name == "apple":
@@ -167,7 +179,12 @@ class Level1:
 
         
         # return to world when all items are collected
-        if self.items_collected == 2:
-            self.winning_the_level()
+        if self.items_collected == 4:
+            self.ending_the_level("You found all the items! Returning to world map...")
+            game.Game().map = "world"
+            game.Game().run() # Return to world map (adjust as needed)
+
+        if self.timer.remaining_time <= 0:
+            self.ending_the_level("Time's up! Returning to world map...")
             game.Game().map = "world"
             game.Game().run() # Return to world map (adjust as needed)

@@ -30,7 +30,7 @@ class Game:
         self.tunnel2 = tmx_data.get_object_by_name("tunnel2")
 
         # by default world
-        self.map = "world"
+        self.map = "level1"
 
         self.walls = []
         self.side_stairs = []
@@ -216,8 +216,8 @@ class Game:
                     self.player.move_back()
 
                 if self.check_collision_with_door(self.doors[0]):
-                    self.map = "level1"
                     self.enter_level1()  # Affiche le message d'entrée avant de commencer le jeu
+                    self.map = "level1"
 
                 if self.check_collision_with_tunnel(self.tunnels[0]):
                     self.enter_the_tunnel()
