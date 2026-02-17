@@ -3,8 +3,10 @@ import pytmx
 import pyscroll
 
 from player import Player
-from item import Item
+from dialogue import Dialogue
 from level1 import Level1
+from timer import CountdownTimer
+from dialogue import Dialogue
 
 class Game:
     def __init__(self):
@@ -30,7 +32,7 @@ class Game:
         self.tunnel2 = tmx_data.get_object_by_name("tunnel2")
 
         # by default world
-        self.map = "level1"
+        self.map = "world"
 
         self.walls = []
         self.side_stairs = []
@@ -136,73 +138,37 @@ class Game:
             fade.set_alpha(alpha)
             self.screen.blit(fade, (0, 0))
             pygame.display.update()
-            pygame.time.delay(5)
+            pygame.time.delay(5) 
 
-    def fade_out_from_black(self):
-        fade = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
-        fade.fill((0, 0, 0))
-        for alpha in range(200, -1, -1):
-            fade.set_alpha(alpha)
-            self.screen.blit(fade, (0, 0))
-            pygame.display.update()
-            pygame.time.delay(5)
-
-    def enter_the_tunnel(self):
-        paused = True
-        font = pygame.font.SysFont(None, 48)
-        text = font.render("Entering the tunnel...", True, (255, 255, 255))
-        text_rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
-
+    def enter_door(self, message):
+        dialogue = Dialogue(message)
+        dialogue.start()
         self.fade_in_to_black()
 
-        while paused:
+        while dialogue.active:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    paused = False
                     pygame.quit()
-                    exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        paused = False
-                        pygame.quit()
-                        exit()
-
-            self.screen.fill((0, 0, 0))
-            self.screen.blit(text, text_rect)
-            pygame.display.flip()
-            pygame.time.delay(2000)  # Pause for 2 seconds
-            paused = False
-        
-        self.fade_out_from_black()
-
-    def enter_level1(self):
-        paused = True 
-        font = pygame.font.SysFont(None, 48)
-        text = font.render("Entering the level1...", True, (255, 0, 0))
-        text_rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
-        
-        self.fade_in_to_black()
-        
-        while paused:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    paused = False
                 elif event.type == pygame.KEYDOWN:
-                    paused = False
+                    if event.key == pygame.K_q:
+                        pygame.quit()
+                    if event.key == pygame.K_c:
+                        self.screen.fill((0, 0, 0)) 
 
-            self.screen.fill((0, 0, 0))
-            self.screen.blit(text, text_rect)
+                dialogue.handle_event(event)
+            dialogue.update()
+            dialogue.draw(self.screen)
             pygame.display.flip()
-            pygame.time.delay(2000)  # Affiche le message pendant 2 secondes
-            paused = False
 
     def run(self):
         clock = pygame.time.Clock()
         fps = 60
 
         running = True
-        level1 = Level1()
+        
         while running:
+
+            pygame.mouse.set_visible(False)
             
             if self.map == "world":
 
@@ -216,21 +182,22 @@ class Game:
                     self.player.move_back()
 
                 if self.check_collision_with_door(self.doors[0]):
-                    self.enter_level1()  # Affiche le message d'entrée avant de commencer le jeu
+                    self.enter_door(["Entering level 1...", "Must collect all the items! Before time runs out..."])
                     self.map = "level1"
+                    timer = CountdownTimer(30)
+                    level1 = Level1(timer)
 
                 if self.check_collision_with_tunnel(self.tunnels[0]):
-                    self.enter_the_tunnel()
+                    self.enter_door(["Entering the tunnel...", "Be careful, it's dark in there!"])
                     self.player.position[0] = self.tunnel2.x
                     self.player.position[1] = self.tunnel2.y - 54
                 
                 if self.check_collision_with_tunnel(self.tunnels[1]):
-                    self.enter_the_tunnel()
+                    self.enter_door(["Leaving the tunnel...", "You were lucky this time..."])
                     self.player.position[0] = self.tunnel1.x
                     self.player.position[1] = self.tunnel1.y + 32
                 
             elif self.map == "level1":
-                
                 level1.run()
             
             pygame.display.flip()

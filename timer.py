@@ -7,7 +7,7 @@ class CountdownTimer:
         self.start_time = pygame.time.get_ticks()
         self.remaining_time = duration
 
-        self.font = pygame.font.Font(None, 50)
+        self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
 
         # blinking control
         self.blink = False

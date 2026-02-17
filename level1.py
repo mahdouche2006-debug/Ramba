@@ -6,10 +6,11 @@ import game
 from player import Player
 from item import Item
 from timer import CountdownTimer
+from dialogue import Dialogue
 
 
 class Level1:
-    def __init__(self):
+    def __init__(self, timer):
         # cree la fenetre du jeu
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         pygame.display.set_caption("RAMBA")
@@ -33,6 +34,8 @@ class Level1:
         # lists
         self.walls = []
         self.items = []
+        self.items_with_item = ["wood_chest_with_item", "gold_chest"]
+        self.items_with_no_item = ["wood_chest_with_no_item", "little_gold_chest"]
 
         for obj in tmx_data.objects:
 
@@ -40,11 +43,14 @@ class Level1:
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
             elif obj.type == "item":
-                has_item = (obj.name == "wood_chest")
-                item = Item(obj.name, obj.x, obj.y, has_item)
+                item = Item(obj.name, obj.x, obj.y, False)
 
                 self.items.append(item)
-                self.group.add(item)     
+                self.group.add(item)
+
+        for item in self.items:
+            if item.name in self.items_with_item:
+                item.has_item = True
         
         self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
 
@@ -52,10 +58,10 @@ class Level1:
         self.items_collected = 0
 
         # timer creation
-        self.timer = CountdownTimer(10)
+        self.timer = timer
 
         # font
-        self.font = pygame.font.SysFont(None, 70)
+        self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
         
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -69,13 +75,6 @@ class Level1:
             return
 
         self.player.walking = False
-
-        # attack key
-        if keys[pygame.K_e]:
-            self.player.attacking = True
-            self.player.frame_index = 0
-            self.player.animate()
-            return
 
         # movement
         if keys[pygame.K_UP]:
@@ -125,20 +124,23 @@ class Level1:
         self.screen.blit(text, (self.screen.get_width()*92/100, 0))
 
     def ending_the_level(self, message):
-        paused = True
-        text = self.font.render(message, True, (255, 255, 255))
-        text_rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
-        while paused:
+        dialogue = Dialogue(message)
+        dialogue.start()
+        self.screen.fill((0, 0, 0)) 
+        while dialogue.active:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    paused = False
+                    pygame.quit()
                 elif event.type == pygame.KEYDOWN:
-                    paused = False
+                    if event.key == pygame.K_q:
+                        pygame.quit()
+                    if event.key == pygame.K_c:
+                        self.screen.fill((0, 0, 0)) 
 
-            self.screen.blit(text, text_rect)
+                dialogue.handle_event(event)
+            dialogue.update()
+            dialogue.draw(self.screen)
             pygame.display.flip()
-            pygame.time.delay(2000)  # Affiche le message pendant 2 secondes
-            paused = False
 
     def run(self):
         self.player.save_location()
@@ -169,7 +171,13 @@ class Level1:
                         self.items_collected += 1
                         self.remove_item(item)
 
-                    elif item.name == "wood_chest":
+                    elif item.name in self.items_with_item or item.name in self.items_with_no_item:
+                        
+                        # animate attack
+                        self.player.attacking = True
+                        self.player.frame_index = 0
+                        self.player.animate()
+
                         if item.has_item:
                             new_apple = Item("apple", item.rect.x, item.rect.y)
                             self.items.append(new_apple)
@@ -180,11 +188,11 @@ class Level1:
         
         # return to world when all items are collected
         if self.items_collected == 4:
-            self.ending_the_level("You found all the items! Returning to world map...")
+            self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
             game.Game().map = "world"
-            game.Game().run() # Return to world map (adjust as needed)
+            game.Game().run()
 
         if self.timer.remaining_time <= 0:
-            self.ending_the_level("Time's up! Returning to world map...")
+            self.ending_the_level(["Time's up! Returning to world map..."])
             game.Game().map = "world"
             game.Game().run() # Return to world map (adjust as needed)
