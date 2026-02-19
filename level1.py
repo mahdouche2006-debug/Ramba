@@ -5,8 +5,8 @@ import game
 
 from player import Player
 from item import Item
-from timer import CountdownTimer
 from dialogue import Dialogue
+from inventory import Inventory
 
 
 class Level1:
@@ -62,6 +62,9 @@ class Level1:
 
         # font
         self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
+
+        # inventory creation
+        self.inventory = Inventory()
         
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -118,6 +121,10 @@ class Level1:
             if self.player.feet.colliderect(item.rect):
                 return item
         return None
+
+    def check_collision_with_list(self, obj):
+        # verification collision
+        return self.player.feet.collidelist(obj) > -1
     
     def draw_counter(self):
         text = self.font.render(f"{self.items_collected}/10", True, (255, 255, 255))
@@ -154,40 +161,48 @@ class Level1:
         self.timer.update()
         self.timer.draw(self.screen)
 
+        self.inventory.draw(self.screen)
+        if self.check_collision_with_list(self.walls):
+            self.player.move_back()
+
         if self.get_colliding_item(self.items):
             self.screen.blit(self.e_image, (self.screen.get_width() - self.e_image.get_width(), self.screen.get_height() - self.e_image.get_height()))
 
 
         for event in pygame.event.get():
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
-                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    pygame.quit()
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
-                item = self.get_colliding_item(self.items)
+                if event.key == pygame.K_e:
+                    item = self.get_colliding_item(self.items)
 
-                if item:
-                    if item.name == "apple":
-                        self.items_collected += 1
-                        self.remove_item(item)
+                    if item:
+                        if item.name == "apple":
+                            self.items_collected += 1
+                            self.remove_item(item)
+                            self.inventory.add_item(item)
 
-                    elif item.name in self.items_with_item or item.name in self.items_with_no_item:
-                        
-                        # animate attack
-                        self.player.attacking = True
-                        self.player.frame_index = 0
-                        self.player.animate()
+                        elif item.name in self.items_with_item or item.name in self.items_with_no_item:
+                            
+                            # animate attack
+                            self.player.attacking = True
+                            self.player.frame_index = 0
+                            self.player.animate()
 
-                        if item.has_item:
-                            new_apple = Item("apple", item.rect.x, item.rect.y)
-                            self.items.append(new_apple)
-                            self.group.add(new_apple)
+                            if item.has_item:
+                                new_apple = Item("apple", item.rect.x, item.rect.y)
+                                self.items.append(new_apple)
+                                self.group.add(new_apple)
 
-                        self.remove_item(item)
+                            self.remove_item(item)
 
+                if event.key == pygame.K_i:
+                    self.inventory.open = not self.inventory.open
         
         # return to world when all items are collected
-        if self.items_collected == 4:
+        if self.items_collected == 5:
             self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
             game.Game().map = "world"
             game.Game().run()

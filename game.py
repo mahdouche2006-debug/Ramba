@@ -130,7 +130,7 @@ class Game:
     def check_collision_with_list(self, obj):
         # verification collision
         return self.player.feet.collidelist(obj) > -1
-    
+
     def fade_in_to_black(self):
         fade = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
         fade.fill((0, 0, 0))
