@@ -65,12 +65,25 @@ class Level1:
 
         # inventory creation
         self.inventory = Inventory()
+
+        # change the soud of the footsteps
+        self.player.walk_sounds = [
+            pygame.mixer.Sound("music/woodWalk1.wav"),
+            pygame.mixer.Sound("music/woodWalk2.wav"),
+            pygame.mixer.Sound("music/woodWalk3.wav")
+        ]
+
+        for sound in self.player.walk_sounds:
+            sound.set_volume(0.2)
         
     def handle_input(self):
         keys = pygame.key.get_pressed()
 
         dx = 0
         dy = 0
+
+        if self.inventory.open:
+            return
 
         # prevent movement while attacking
         if self.player.attacking:
@@ -112,7 +125,7 @@ class Level1:
 
         self.player.animate()
     
-    def remove_item(self, item):
+    def remove_item_from_lists(self, item):
         self.group.remove(item)
         self.items.remove(item)
 
@@ -149,6 +162,30 @@ class Level1:
             dialogue.draw(self.screen)
             pygame.display.flip()
 
+    def remove_item(self, item):
+        if item:
+            if item.name == "apple":
+                self.items_collected += 1
+                self.remove_item_from_lists(item)
+                self.inventory.add_item(item)
+
+            elif item.name in self.items_with_item or item.name in self.items_with_no_item:
+                
+                # animate attack
+                self.player.attacking = True
+                self.player.frame_index = 0
+                self.player.animate()
+
+                if item.has_item:
+                    self.generate_new_item(item, "apple")
+
+                self.remove_item_from_lists(item)
+    
+    def generate_new_item(self, item, item_name):
+        new_apple = Item(item_name, item.rect.x, item.rect.y)
+        self.items.append(new_apple)
+        self.group.add(new_apple)
+
     def run(self):
         self.player.save_location()
         self.handle_input()
@@ -168,41 +205,22 @@ class Level1:
         if self.get_colliding_item(self.items):
             self.screen.blit(self.e_image, (self.screen.get_width() - self.e_image.get_width(), self.screen.get_height() - self.e_image.get_height()))
 
-
         for event in pygame.event.get():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     pygame.quit()
 
-                if event.key == pygame.K_e:
+                if event.key == pygame.K_e and not self.inventory.open:
                     item = self.get_colliding_item(self.items)
-
-                    if item:
-                        if item.name == "apple":
-                            self.items_collected += 1
-                            self.remove_item(item)
-                            self.inventory.add_item(item)
-
-                        elif item.name in self.items_with_item or item.name in self.items_with_no_item:
-                            
-                            # animate attack
-                            self.player.attacking = True
-                            self.player.frame_index = 0
-                            self.player.animate()
-
-                            if item.has_item:
-                                new_apple = Item("apple", item.rect.x, item.rect.y)
-                                self.items.append(new_apple)
-                                self.group.add(new_apple)
-
-                            self.remove_item(item)
+                    self.remove_item(item)
 
                 if event.key == pygame.K_i:
+                    self.inventory.open_sound.play()
                     self.inventory.open = not self.inventory.open
         
         # return to world when all items are collected
-        if self.items_collected == 5:
+        if self.items_collected == 8:
             self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
             game.Game().map = "world"
             game.Game().run()

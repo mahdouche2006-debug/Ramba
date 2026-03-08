@@ -182,9 +182,9 @@ class Game:
                     self.player.move_back()
 
                 if self.check_collision_with_door(self.doors[0]):
-                    self.enter_door(["Entering level 1...", "Must collect all the items! Before time runs out..."])
+                    self.enter_door(["Entering Home...", "Must collect all the items! Before time runs out..."])
                     self.map = "level1"
-                    timer = CountdownTimer(30)
+                    timer = CountdownTimer(100)
                     level1 = Level1(timer)
 
                 if self.check_collision_with_tunnel(self.tunnels[0]):

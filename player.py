@@ -5,7 +5,7 @@ import animation
 class Player(animation.AnimateSprite):
 
     def __init__(self, x, y):
-        super().__init__("player")
+        super().__init__()
         self.rect = self.image.get_rect(topleft=(x,y))
         self.image.set_colorkey([255, 255, 255])
         self.position = [x, y]

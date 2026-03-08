@@ -1,12 +1,27 @@
 import pygame
+import random
 
 
 class AnimateSprite(pygame.sprite.Sprite):
-    def __init__(self, sprite_name):
+    def __init__(self):
         super().__init__()
 
         # animation speed (bigger = slower)
         self.animation_speed = 5
+
+        # load sound effects
+        self.walk_sounds = [
+            pygame.mixer.Sound("music/grassWalk1.wav"),
+            pygame.mixer.Sound("music/grassWalk2.wav"),
+            pygame.mixer.Sound("music/grassWalk3.wav")
+        ]
+        
+        # Set volume for all sounds in the list
+        for sound in self.walk_sounds:
+            sound.set_volume(0.2)
+
+        """self.open_sfx = pygame.mixer.Sound("music/Chest_Open.wav")
+        self.open_sfx.set_volume(0.3)"""
 
         # load animations
         self.animations = {
@@ -75,6 +90,8 @@ class AnimateSprite(pygame.sprite.Sprite):
             self.frame_index += 1
             max_frames = len(frames) * self.animation_speed
 
+            # self.open_sfx.play()
+
             if self.frame_index >= max_frames:
                 self.frame_index = 0
                 self.attacking = False   # stop attacking after animation
@@ -90,6 +107,10 @@ class AnimateSprite(pygame.sprite.Sprite):
 
             self.frame_index += 1
             max_frames = len(frames) * self.animation_speed
+
+            if self.frame_index % max_frames == 1:
+                random_step = random.choice(self.walk_sounds)
+                random_step.play()
 
             if self.frame_index >= max_frames:
                 self.frame_index = 0
