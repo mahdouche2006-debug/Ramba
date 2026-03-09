@@ -18,7 +18,7 @@ class AnimateSprite(pygame.sprite.Sprite):
         
         # Set volume for all sounds in the list
         for sound in self.walk_sounds:
-            sound.set_volume(0.2)
+            sound.set_volume(0.3)
 
         """self.open_sfx = pygame.mixer.Sound("music/Chest_Open.wav")
         self.open_sfx.set_volume(0.3)"""

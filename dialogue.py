@@ -6,6 +6,8 @@ class Dialogue:
         self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
         
         self.dialogues = message # message should be a list
+        self.sound = pygame.mixer.Sound("music/typingOneChar.mp3")
+        self.sound.set_volume(0.6)
 
         self.dialogue_index = 0
         self.current_length = 0
@@ -39,8 +41,9 @@ class Dialogue:
             return
 
         self.letter_timer += 1
-        if self.letter_timer % 20 == 0 and self.current_length < len(self.dialogues[self.dialogue_index]):
+        if self.letter_timer % 35 == 0 and self.current_length < len(self.dialogues[self.dialogue_index]):
             self.current_length += 1
+            self.sound.play()
 
     def draw(self, screen):
         if not self.active:

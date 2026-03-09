@@ -74,7 +74,7 @@ class Level1:
         ]
 
         for sound in self.player.walk_sounds:
-            sound.set_volume(0.2)
+            sound.set_volume(0.3)
         
     def handle_input(self):
         keys = pygame.key.get_pressed()

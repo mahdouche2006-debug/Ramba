@@ -141,9 +141,9 @@ class Game:
             pygame.time.delay(5) 
 
     def enter_door(self, message):
+        self.fade_in_to_black()
         dialogue = Dialogue(message)
         dialogue.start()
-        self.fade_in_to_black()
 
         while dialogue.active:
             for event in pygame.event.get():
