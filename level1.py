@@ -2,11 +2,13 @@ import pygame
 import pytmx
 import pyscroll
 import game
+import math
 
 from player import Player
 from item import Item
 from dialogue import Dialogue
 from inventory import Inventory
+from board import Board
 
 
 class Level1:
@@ -29,13 +31,30 @@ class Level1:
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
         self.group.add(self.player) 
 
-        self.e_image = pygame.image.load("images/e.png").convert_alpha()
+        # Load the image
+        original_e = pygame.image.load("images/e.png").convert_alpha()
+
+        # Scale it to 32x32 pixels
+        self.e_image = pygame.transform.scale(original_e, (16, 16))
+
+        # Create the E prompt as a Sprite
+        self.e_sprite = pygame.sprite.Sprite()
+        self.e_sprite.image = self.e_image
+        self.e_sprite.rect = self.e_image.get_rect()
+
+        # Start it off-screen so it's hidden
+        self.e_sprite.rect.topleft = (-100, -100)
+
+        # Add it to the group so it moves with the camera
+        self.group.add(self.e_sprite)
         
         # lists
         self.walls = []
         self.items = []
         self.items_with_item = ["wood_chest_with_item", "gold_chest"]
         self.items_with_no_item = ["wood_chest_with_no_item", "little_gold_chest"]
+
+        self.sculptures = []
 
         for obj in tmx_data.objects:
 
@@ -47,6 +66,14 @@ class Level1:
 
                 self.items.append(item)
                 self.group.add(item)
+            
+            elif obj.type == "sculpture":
+                item = Item(obj.name, obj.x, obj.y, False)
+                self.sculptures.append(item)
+                self.group.add(item)
+
+            if obj.name == "board":
+                self.board = Board(obj.x, obj.y, obj.width, obj.height)
 
         for item in self.items:
             if item.name in self.items_with_item:
@@ -82,7 +109,7 @@ class Level1:
         dx = 0
         dy = 0
 
-        if self.inventory.open:
+        if self.inventory.open or self.board.open:
             return
 
         # prevent movement while attacking
@@ -199,11 +226,35 @@ class Level1:
         self.timer.draw(self.screen)
 
         self.inventory.draw(self.screen)
+
+        self.board.draw(self.screen)
+
+        # Draw a red box around the board hitbox
+        pygame.draw.rect(self.screen, (255, 0, 0), self.board.rect.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
+
+        # Draw a blue box around the player's feet hitbox
+        pygame.draw.rect(self.screen, (0, 0, 255), self.player.feet.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
+
         if self.check_collision_with_list(self.walls):
             self.player.move_back()
 
-        if self.get_colliding_item(self.items):
-            self.screen.blit(self.e_image, (self.screen.get_width() - self.e_image.get_width(), self.screen.get_height() - self.e_image.get_height()))
+        # 1. Get a shifting offset based on time
+        # pygame.time.get_ticks() gives us the time in milliseconds
+        # We divide by 200 to control the speed of the bobbing
+        bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
+
+        near_sculpture = self.get_colliding_item(self.sculptures)
+        near_board = self.player.feet.colliderect(self.board.rect)
+        if near_board or near_sculpture:
+            # Position the E sprite relative to the player's WORLD coordinates
+            # Pyscroll will automatically scale this by 3x and offset it for the camera
+            self.e_sprite.rect.midbottom = (
+                self.player.rect.centerx + bobbing_offset, 
+                self.player.rect.top - 10
+            )
+        else:
+            # Hide it when not near anything
+            self.e_sprite.rect.topleft = (-500, -500)
 
         for event in pygame.event.get():
 
@@ -212,8 +263,13 @@ class Level1:
                     pygame.quit()
 
                 if event.key == pygame.K_e and not self.inventory.open:
-                    item = self.get_colliding_item(self.items)
-                    self.remove_item(item)
+                    sculpture = self.get_colliding_item(self.sculptures)
+                    if sculpture:
+                        print("Interacting with sculpture:", sculpture.name if sculpture else "None")
+
+                    if self.player.feet.colliderect(self.board.rect):
+                        self.board.open_sound.play()
+                        self.board.open = not self.board.open
 
                 if event.key == pygame.K_i:
                     self.inventory.open_sound.play()

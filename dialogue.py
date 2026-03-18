@@ -7,7 +7,7 @@ class Dialogue:
         
         self.dialogues = message # message should be a list
         self.sound = pygame.mixer.Sound("music/typingOneChar.mp3")
-        self.sound.set_volume(0.6)
+        self.sound.set_volume(0.4)
 
         self.dialogue_index = 0
         self.current_length = 0
