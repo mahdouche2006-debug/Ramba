@@ -182,7 +182,7 @@ class Game:
                     self.player.move_back()
 
                 if self.check_collision_with_door(self.doors[0]):
-                    self.enter_door(["Entering Home...", "Must collect all the items!"])
+                    self.enter_door(["En Ho..", "Must tems!"])
                     self.map = "level1"
                     timer = CountdownTimer(100)
                     level1 = Level1(timer)

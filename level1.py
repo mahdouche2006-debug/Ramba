@@ -9,6 +9,7 @@ from item import Item
 from dialogue import Dialogue
 from inventory import Inventory
 from board import Board
+from enigmaUI import EnigmaUI
 
 
 class Level1:
@@ -102,13 +103,24 @@ class Level1:
 
         for sound in self.player.walk_sounds:
             sound.set_volume(0.3)
+
+        # dictionary for the enigma UI
+        self.enigma_data = {
+            "apple": {
+                "options": ["Auguste Rodin", "Michelangelo", "Banksy"],
+                "correct": 0,
+                "image": pygame.image.load("images/gold_chest.png")
+            }
+        }
+
+        self.is_viewing_enigma = False
         
     def handle_input(self):
         keys = pygame.key.get_pressed()
 
         dx = 0
         dy = 0
-        self.inventory.open or self.board.open
+        
         if not self.player.canMove:
             return
 
@@ -213,31 +225,28 @@ class Level1:
         self.items.append(new_apple)
         self.group.add(new_apple)
 
-    def run(self):
-        self.player.save_location()
-        self.handle_input()
+    def check_collision_between_mouse_and_buttons(self, mouse_pos):
+        for i, rect in enumerate(self.current_ui.button_rects):
+            if rect.collidepoint(mouse_pos):
+                return i
+        return None
+    
+    def check_enigma_answer(self, mouse_pos):
+        clicked_index = self.check_collision_between_mouse_and_buttons(mouse_pos)
+        if clicked_index is not None:
+            if clicked_index == self.current_ui.correct_index:
+                print("Correct!")
+                self.is_viewing_enigma = False
+                pygame.mouse.set_visible(True)
+            else:
+                print("Wrong answer, try again.")
 
-        self.group.update()
-        self.group.center(self.player.rect)
-        self.group.draw(self.screen)
-        self.draw_counter()
+    def open_board(self):
+        self.board.open_sound.play()
+        self.board.open = not self.board.open
+        self.player.canMove = not self.player.canMove
 
-        self.timer.update()
-        self.timer.draw(self.screen)
-
-        self.inventory.draw(self.screen)
-
-        self.board.draw(self.screen)
-
-        # Draw a red box around the board hitbox
-        pygame.draw.rect(self.screen, (255, 0, 0), self.board.rect.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
-
-        # Draw a blue box around the player's feet hitbox
-        pygame.draw.rect(self.screen, (0, 0, 255), self.player.feet.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
-
-        if self.check_collision_with_list(self.walls):
-            self.player.move_back()
-
+    def drawing_e(self):
         # 1. Get a shifting offset based on time
         # pygame.time.get_ticks() gives us the time in milliseconds
         # We divide by 200 to control the speed of the bobbing
@@ -256,27 +265,80 @@ class Level1:
             # Hide it when not near anything
             self.e_sprite.rect.topleft = (-500, -500)
 
-        for event in pygame.event.get():
+    def open_inventory(self):
+        self.inventory.open_sound.play()
+        self.inventory.open = not self.inventory.open
+        self.player.canMove = not self.player.canMove
 
+    def create_current_enigma(self, sculpture):
+        data = self.enigma_data[sculpture.name]
+        self.current_ui = EnigmaUI(data["image"], data["options"], data["correct"])
+        self.is_viewing_enigma = True
+
+    def run(self):
+        self.player.save_location()
+    
+        # Only allow movement if NOT in a menu
+        if not self.is_viewing_enigma:
+            self.handle_input()
+
+        self.group.update()
+        self.group.center(self.player.rect)
+        self.group.draw(self.screen)
+
+        self.timer.update()
+        self.timer.draw(self.screen)
+
+        self.inventory.draw(self.screen)
+
+        self.board.draw(self.screen)
+
+        if self.is_viewing_enigma:
+            self.current_ui.draw(self.screen)
+            pygame.mouse.set_visible(True)
+
+        # Draw a red box around the board hitbox
+        pygame.draw.rect(self.screen, (255, 0, 0), self.board.rect.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
+
+        # Draw a blue box around the player's feet hitbox
+        pygame.draw.rect(self.screen, (0, 0, 255), self.player.feet.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
+
+        if self.check_collision_with_list(self.walls):
+            self.player.move_back()
+
+        self.drawing_e()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+            # Handle Keyboard
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     pygame.quit()
 
                 if event.key == pygame.K_e and not self.inventory.open:
-                    sculpture = self.get_colliding_item(self.sculptures)
-                    if sculpture:
-                        print("Interacting with sculpture:", sculpture.name if sculpture else "None")
-
+                    # If menu is already open, close it with E
+                    if self.is_viewing_enigma:
+                        self.is_viewing_enigma = False
+                    else:
+                        # Try to open it
+                        sculpture = self.get_colliding_item(self.sculptures)
+                        if sculpture:
+                            self.create_current_enigma(sculpture)
+                            self.player.canMove = False # Freeze player
+                    
                     if self.player.feet.colliderect(self.board.rect):
-                        self.board.open_sound.play()
-                        self.board.open = not self.board.open
-                        self.player.canMove = not self.player.canMove
+                        self.open_board()
 
                 if event.key == pygame.K_i:
-                    self.inventory.open_sound.play()
-                    self.inventory.open = not self.inventory.open
-                    self.player.canMove = not self.player.canMove
-        
+                    self.open_inventory()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.is_viewing_enigma:
+                    # Check the answer
+                    self.check_enigma_answer(event.pos)
+            
         # return to world when all items are collected
         if self.items_collected == 8:
             self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
