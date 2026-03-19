@@ -11,7 +11,7 @@ class Inventory:
         self.image = pygame.image.load("images/inventory.png")
         self.rect = self.image.get_rect()
         self.open_sound = pygame.mixer.Sound("music/Click.wav")
-        self.open_sound.set_volume(0.35)
+        self.open_sound.set_volume(0.5)
 
     def add_item(self, item):
         for i, slot in enumerate(self.slots):

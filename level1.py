@@ -108,8 +108,8 @@ class Level1:
 
         dx = 0
         dy = 0
-
-        if self.inventory.open or self.board.open:
+        self.inventory.open or self.board.open
+        if not self.player.canMove:
             return
 
         # prevent movement while attacking
@@ -270,10 +270,12 @@ class Level1:
                     if self.player.feet.colliderect(self.board.rect):
                         self.board.open_sound.play()
                         self.board.open = not self.board.open
+                        self.player.canMove = not self.player.canMove
 
                 if event.key == pygame.K_i:
                     self.inventory.open_sound.play()
                     self.inventory.open = not self.inventory.open
+                    self.player.canMove = not self.player.canMove
         
         # return to world when all items are collected
         if self.items_collected == 8:
