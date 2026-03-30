@@ -113,6 +113,9 @@ class Level1:
             }
         }
 
+        #initialize the cooldown dictionary for sculptures
+        self.sculpture_cooldowns = {}
+
         self.is_viewing_enigma = False
         
     def handle_input(self):
@@ -233,13 +236,19 @@ class Level1:
     
     def check_enigma_answer(self, mouse_pos):
         clicked_index = self.check_collision_between_mouse_and_buttons(mouse_pos)
+        
         if clicked_index is not None:
             if clicked_index == self.current_ui.correct_index:
-                print("Correct!")
-                self.is_viewing_enigma = False
-                pygame.mouse.set_visible(True)
+                # CORRECT: Trigger green shake
+                self.current_ui.trigger_wrong_anim(clicked_index, correct=True)
+                # You could add your "Clay Collected" logic here!
             else:
-                print("Wrong answer, try again.")
+                # WRONG: Trigger red shake and set lock
+                self.current_ui.trigger_wrong_anim(clicked_index, correct=False)
+                
+                sculpture = self.get_colliding_item(self.sculptures)
+                if sculpture:
+                    self.sculpture_cooldowns[sculpture.name] = pygame.time.get_ticks() + 5000
 
     def open_board(self):
         self.board.open_sound.play()
@@ -271,9 +280,11 @@ class Level1:
         self.player.canMove = not self.player.canMove
 
     def create_current_enigma(self, sculpture):
-        data = self.enigma_data[sculpture.name]
-        self.current_ui = EnigmaUI(data["image"], data["options"], data["correct"])
-        self.is_viewing_enigma = True
+        # Get the specific data for this sculpture from your dictionary
+        if sculpture.name in self.enigma_data:
+            data = self.enigma_data[sculpture.name]
+            self.current_ui = EnigmaUI(data["image"], data["options"], data["correct"])
+            self.is_viewing_enigma = True
 
     def run(self):
         self.player.save_location()
@@ -294,14 +305,17 @@ class Level1:
         self.board.draw(self.screen)
 
         if self.is_viewing_enigma:
-            self.current_ui.draw(self.screen)
+            # 1. Draw the UI and check if it has finished its "Wrong" animation
+            # (This assumes you added 'return is_done_shaking' to your EnigmaUI.draw)
+            animation_finished = self.current_ui.draw(self.screen)
+            
+            # 2. Keep the mouse visible while the menu is open
             pygame.mouse.set_visible(True)
 
-        # Draw a red box around the board hitbox
-        pygame.draw.rect(self.screen, (255, 0, 0), self.board.rect.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
-
-        # Draw a blue box around the player's feet hitbox
-        pygame.draw.rect(self.screen, (0, 0, 255), self.player.feet.move(-self.group._map_layer.view_rect.x, -self.group._map_layer.view_rect.y), 2)
+            # 3. If the UI says it's done shaking (or a correct answer was picked), close it
+            if animation_finished:
+                self.is_viewing_enigma = False
+                self.player.canMove = True
 
         if self.check_collision_with_list(self.walls):
             self.player.move_back()
@@ -312,22 +326,32 @@ class Level1:
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-            # Handle Keyboard
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     pygame.quit()
 
                 if event.key == pygame.K_e and not self.inventory.open:
-                    # If menu is already open, close it with E
                     if self.is_viewing_enigma:
                         self.is_viewing_enigma = False
+                        self.player.canMove = True
                     else:
-                        # Try to open it
                         sculpture = self.get_colliding_item(self.sculptures)
                         if sculpture:
-                            self.create_current_enigma(sculpture)
-                            self.player.canMove = False # Freeze player
-                    
+                            # --- COOLDOWN CHECK ---
+                            current_time = pygame.time.get_ticks()
+                            lock_end_time = self.sculpture_cooldowns.get(sculpture.name, 0)
+
+                            if current_time < lock_end_time:
+                                # Still locked! Calculate seconds remaining
+                                timeLeft = int((lock_end_time - current_time) / 1000)
+                                print(f"Locked! Try again in {timeLeft}s")
+                                print(f"DEBUG: Sculpture {sculpture.name} is locked until {lock_end_time}. Current: {current_time}")
+                            else:
+                                # Not locked! Open normally
+                                self.create_current_enigma(sculpture)
+                                self.player.canMove = False 
+                            # -----------------------
+
                     if self.player.feet.colliderect(self.board.rect):
                         self.open_board()
 
@@ -336,7 +360,6 @@ class Level1:
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.is_viewing_enigma:
-                    # Check the answer
                     self.check_enigma_answer(event.pos)
             
         # return to world when all items are collected
