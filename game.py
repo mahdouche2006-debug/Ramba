@@ -200,9 +200,6 @@ class Game:
             elif self.map == "level1":
                 level1.run()
             
-            pygame.display.flip()
-
-            # event handeling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -210,7 +207,8 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:    
                         running = False
-            
+
+            pygame.display.flip()
 
             clock.tick(fps)
 

@@ -1,3 +1,4 @@
+from cmath import rect
 import math
 
 import pygame
@@ -5,7 +6,7 @@ import pygame
 class EnigmaUI:
     def __init__(self, sculpture_image, artist_names, correct_index):
         # 1. Load the background template you just drew
-        self.template = pygame.image.load("images/sculptureImage.png").convert_alpha()
+        self.template = pygame.image.load("images/EnigmaUI.png").convert_alpha()
         self.rect = self.template.get_rect(center=(pygame.display.get_surface().get_width()//2, 
                                                    pygame.display.get_surface().get_height()//2))
         
@@ -17,12 +18,17 @@ class EnigmaUI:
         self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 25)
         
         # 3. Define Clickable Rects (Coordinates relative to the SCREEN)
-        # You will need to adjust these numbers based on where your boxes are in your image
-        offset_y = 650
+        # The Y-offset from the top of the template to the top of the button boxes
+        # Based on your image, the buttons are quite low
+        offset_y = 615 
+
         self.button_rects = [
-            pygame.Rect(self.rect.x + 90,  self.rect.y + offset_y, 200, 80), # Box 1
-            pygame.Rect(self.rect.x + 420, self.rect.y + offset_y, 200, 80), # Box 2
-            pygame.Rect(self.rect.x + 700, self.rect.y + offset_y, 200, 80), # Box 3
+            # Box 1 (Left)
+            pygame.Rect(self.rect.x + 45,  self.rect.y + offset_y, 285, 135), 
+            # Box 2 (Middle)
+            pygame.Rect(self.rect.x + 365, self.rect.y + offset_y, 285, 135), 
+            # Box 3 (Right)
+            pygame.Rect(self.rect.x + 685, self.rect.y + offset_y, 285, 135), 
         ]
 
         self.clicked_index = None
@@ -30,7 +36,12 @@ class EnigmaUI:
         self.shake_offset = 0
         self.is_correct = False # Tracks if we should show Green or Red
 
-    def trigger_wrong_anim(self, index, correct = False):
+        # Initialize 3 colors (one for each button) starting at your default dark brown
+        self.current_colors = [[60, 40, 30] for _ in range(3)] 
+        self.target_gold = [218, 165, 32]
+        self.default_brown = [60, 40, 30]
+
+    def trigger_shake_anim(self, index, correct = False):
         self.clicked_index = index
         self.is_correct = correct
         self.shake_timer = pygame.time.get_ticks()
@@ -53,13 +64,28 @@ class EnigmaUI:
 
         # Draw background
         screen.blit(self.template, self.rect)
-        screen.blit(self.sculpture_img, (self.rect.x + 100, self.rect.y + 50))
+        screen.blit(self.sculpture_img, (self.rect.centerx - self.sculpture_img.get_width() // 2, self.rect.centery - self.sculpture_img.get_height() // 2 - 100))
+
+        mouse_pos = pygame.mouse.get_pos()
 
         for i, name in enumerate(self.options):
-            color = (0, 0, 0) # Default Black
-            if i == self.clicked_index:
-                color = (0, 200, 0) if self.is_correct else (255, 0, 0)
+            color = (60, 40, 30) # A dark brown usually looks better than pure black on that parchment
             
+            if i == self.clicked_index:
+                color = (0, 180, 0) if self.is_correct else (200, 0, 0)
+
+            else:
+                # Determine which color we WANT to be (Target)
+                target = self.target_gold if self.button_rects[i].collidepoint(mouse_pos) and self.clicked_index is None else self.default_brown
+                
+                # Transition each RGB channel slowly (Lerp)
+                # 0.1 is the speed. Lower = slower transition
+                for j in range(3):
+                    diff = target[j] - self.current_colors[i][j]
+                    self.current_colors[i][j] += diff * 0.15
+                
+                color = tuple(self.current_colors[i])
+
             text_surf = self.font.render(name, True, color)
             
             # Apply shake_offset only to the X of the wrong button
@@ -67,7 +93,12 @@ class EnigmaUI:
             if i == self.clicked_index:
                 current_rect.x += self.shake_offset
                 
+            """ this code is for satrting the names from the left edge of the button, you can adjust the padding_x value to move it more left or right
+            padding_x = 10
+            text_rect = text_surf.get_rect(midleft=(current_rect.left + padding_x, current_rect.centery))"""
+
             text_rect = text_surf.get_rect(center=current_rect.center)
-            screen.blit(text_surf, text_rect)
+
+            screen.blit(text_surf, text_rect) # Center text in the button
 
         return is_done_shaking

@@ -51,9 +51,6 @@ class Level1:
         
         # lists
         self.walls = []
-        self.items = []
-        self.items_with_item = ["wood_chest_with_item", "gold_chest"]
-        self.items_with_no_item = ["wood_chest_with_no_item", "little_gold_chest"]
 
         self.sculptures = []
 
@@ -61,12 +58,6 @@ class Level1:
 
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-
-            elif obj.type == "item":
-                item = Item(obj.name, obj.x, obj.y, False)
-
-                self.items.append(item)
-                self.group.add(item)
             
             elif obj.type == "sculpture":
                 item = Item(obj.name, obj.x, obj.y, False)
@@ -76,9 +67,6 @@ class Level1:
             if obj.name == "board":
                 self.board = Board(obj.x, obj.y, obj.width, obj.height)
 
-        for item in self.items:
-            if item.name in self.items_with_item:
-                item.has_item = True
         
         self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
 
@@ -106,11 +94,16 @@ class Level1:
 
         # dictionary for the enigma UI
         self.enigma_data = {
-            "apple": {
+            "TheThinker": {
                 "options": ["Auguste Rodin", "Michelangelo", "Banksy"],
                 "correct": 0,
-                "image": pygame.image.load("images/gold_chest.png")
-            }
+                "image": pygame.image.load("images/TheThinker.jpg").convert_alpha()
+            },
+            "David": {
+                "options": ["Donatello", "Bernini", "Michelangelo"],
+                "correct": 2,
+                "image": pygame.image.load("images/David.jpg").convert_alpha()
+            },
         }
 
         #initialize the cooldown dictionary for sculptures
@@ -167,9 +160,9 @@ class Level1:
 
         self.player.animate()
     
-    def remove_item_from_lists(self, item):
+    def remove_sculpture_from_list(self, item):
         self.group.remove(item)
-        self.items.remove(item)
+        self.sculptures.remove(item)
 
     def get_colliding_item(self, list):
         for item in list:
@@ -204,29 +197,16 @@ class Level1:
             dialogue.draw(self.screen)
             pygame.display.flip()
 
-    def remove_item(self, item):
+    def add_sculpture_to_inventory(self, item):
         if item:
-            if item.name == "apple":
-                self.items_collected += 1
-                self.remove_item_from_lists(item)
-                self.inventory.add_item(item)
+            self.items_collected += 1
+            self.remove_sculpture_from_list(item)
+            self.inventory.add_item(item)
 
-            elif item.name in self.items_with_item or item.name in self.items_with_no_item:
-                
-                # animate attack
-                self.player.attacking = True
-                self.player.frame_index = 0
-                self.player.animate()
-
-                if item.has_item:
-                    self.generate_new_item(item, "apple")
-
-                self.remove_item_from_lists(item)
-    
     def generate_new_item(self, item, item_name):
-        new_apple = Item(item_name, item.rect.x, item.rect.y)
-        self.items.append(new_apple)
-        self.group.add(new_apple)
+        new_item = Item(item_name, item.rect.x, item.rect.y)
+        self.items.append(new_item)
+        self.group.add(new_item)
 
     def check_collision_between_mouse_and_buttons(self, mouse_pos):
         for i, rect in enumerate(self.current_ui.button_rects):
@@ -240,11 +220,12 @@ class Level1:
         if clicked_index is not None:
             if clicked_index == self.current_ui.correct_index:
                 # CORRECT: Trigger green shake
-                self.current_ui.trigger_wrong_anim(clicked_index, correct=True)
+                self.current_ui.trigger_shake_anim(clicked_index, correct=True)
+                self.add_sculpture_to_inventory(self.get_colliding_item(self.sculptures))
                 # You could add your "Clay Collected" logic here!
             else:
                 # WRONG: Trigger red shake and set lock
-                self.current_ui.trigger_wrong_anim(clicked_index, correct=False)
+                self.current_ui.trigger_shake_anim(clicked_index, correct=False)
                 
                 sculpture = self.get_colliding_item(self.sculptures)
                 if sculpture:
@@ -308,9 +289,6 @@ class Level1:
             # 1. Draw the UI and check if it has finished its "Wrong" animation
             # (This assumes you added 'return is_done_shaking' to your EnigmaUI.draw)
             animation_finished = self.current_ui.draw(self.screen)
-            
-            # 2. Keep the mouse visible while the menu is open
-            pygame.mouse.set_visible(True)
 
             # 3. If the UI says it's done shaking (or a correct answer was picked), close it
             if animation_finished:
@@ -362,6 +340,7 @@ class Level1:
                 if self.is_viewing_enigma:
                     self.check_enigma_answer(event.pos)
             
+       
         # return to world when all items are collected
         if self.items_collected == 8:
             self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
@@ -372,3 +351,7 @@ class Level1:
             self.ending_the_level(["Time's up! Returning to world map..."])
             game.Game().map = "world"
             game.Game().run() # Return to world map (adjust as needed)
+        
+        
+        if self.is_viewing_enigma:
+            pygame.mouse.set_visible(True)
