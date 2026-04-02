@@ -82,6 +82,8 @@ class AnimateSprite(pygame.sprite.Sprite):
 
 
     def animate(self):
+        
+        """
 
         # 🔴 ATTACK animation has priority
         if self.attacking:
@@ -99,7 +101,8 @@ class AnimateSprite(pygame.sprite.Sprite):
 
             self.image = frames[self.frame_index // self.animation_speed]
             return
-
+        
+        """
 
         # 🟢 WALK animation
         if self.walking:

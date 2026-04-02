@@ -13,10 +13,9 @@ from enigmaUI import EnigmaUI
 
 
 class Level1:
-    def __init__(self, timer):
+    def __init__(self, timer, screen):
         # cree la fenetre du jeu
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        pygame.display.set_caption("RAMBA")
+        self.screen = screen
 
         # charger la carte (tmx)
         tmx_data = pytmx.util_pygame.load_pygame('one chamber.tmx')
@@ -60,9 +59,9 @@ class Level1:
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
             
             elif obj.type == "sculpture":
-                item = Item(obj.name, obj.x, obj.y, False)
-                self.sculptures.append(item)
-                self.group.add(item)
+                sculpture = Item(obj.name, obj.x, obj.y, False)
+                self.sculptures.append(sculpture)
+                self.group.add(sculpture)
 
             if obj.name == "board":
                 self.board = Board(obj.x, obj.y, obj.width, obj.height)
@@ -118,11 +117,6 @@ class Level1:
         dy = 0
         
         if not self.player.canMove:
-            return
-
-        # prevent movement while attacking
-        if self.player.attacking:
-            self.player.animate()
             return
 
         self.player.walking = False
@@ -308,6 +302,9 @@ class Level1:
                 if event.key == pygame.K_q:
                     pygame.quit()
 
+                if event.key == pygame.K_i:
+                    self.open_inventory()
+
                 if event.key == pygame.K_e and not self.inventory.open:
                     if self.is_viewing_enigma:
                         self.is_viewing_enigma = False
@@ -332,9 +329,6 @@ class Level1:
 
                     if self.player.feet.colliderect(self.board.rect):
                         self.open_board()
-
-                if event.key == pygame.K_i:
-                    self.open_inventory()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.is_viewing_enigma:

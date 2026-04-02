@@ -1,0 +1,290 @@
+import pygame
+import pytmx
+import pyscroll
+import math
+
+from board import Board
+from enigmaUI import EnigmaUI
+from enigmaUI import EnigmaUI
+from inventory import Inventory
+from item import Item
+from player import Player
+from paintingUI import PaintingUI
+
+class PaintingLevel:
+    def __init__(self, screen):
+        self.screen = screen
+        # charger la carte (tmx)
+        tmx_data = pytmx.util_pygame.load_pygame('paintingLevel.tmx')
+        map_data = pyscroll.data.TiledMapData(tmx_data)
+        map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
+        map_layer.zoom = 3
+
+        # generer un joueur
+        player_position = tmx_data.get_object_by_name("player")
+        self.player = Player(player_position.x, player_position.y)
+
+        # dessiner le groupe de calque
+        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=2)
+        self.group.add(self.player)
+
+        # Load the image
+        original_e = pygame.image.load("images/e.png").convert_alpha()
+
+        # Scale it to 32x32 pixels
+        self.e_image = pygame.transform.scale(original_e, (16, 16))
+
+        # Create the E prompt as a Sprite
+        self.e_sprite = pygame.sprite.Sprite()
+        self.e_sprite.image = self.e_image
+        self.e_sprite.rect = self.e_image.get_rect()
+
+        # Start it off-screen so it's hidden
+        self.e_sprite.rect.topleft = (-100, -100)
+
+        # inventory creation
+        self.inventory = Inventory()
+
+        # Add it to the group so it moves with the camera
+        self.group.add(self.e_sprite)
+
+        self.walls = []
+        self.paintings = {}
+
+        for obj in tmx_data.objects:
+
+            if obj.type == "obj":
+                self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+
+            if obj.type == "painting":
+                # Store the rect using the name as the key
+                # Example: self.paintings["Monalisa"] = pygame.Rect(...)
+                self.paintings[obj.name] = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
+
+            if obj.name == "board":
+                self.board = Board(obj.x, obj.y, obj.width, obj.height)
+
+        self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
+
+        # counter for items collected
+        self.paintings_collected = 0
+        self.is_viewing_painting = False
+        self.current_painting_rect = None # Tracks which painting the player is looking at
+
+        # The 5 paintings the player MUST find
+        self.masterpieces = ["Monalisa", "Starry Night", "The Scream", "Guernica", "Las Meninas"]
+        self.current_target_index = 0
+        self.paintings_found = 0
+        self.lives = 3
+
+        # The "Clue" logic
+        self.current_target_name = "Monalisa" # This would be set by the 'board' interaction
+        self.clue_active = False
+
+        # Dictionary of painting details
+        self.paintings_data = {
+            "Monalisa": {
+                "clue": "Find the lady with the mysterious smile.",        
+                "image": pygame.image.load("images/Monalisa.png")
+            },           
+        }
+
+        # font
+        self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
+
+        # change the soud of the footsteps
+        self.player.walk_sounds = [
+            pygame.mixer.Sound("music/woodWalk1.wav"),
+            pygame.mixer.Sound("music/woodWalk2.wav"),
+            pygame.mixer.Sound("music/woodWalk3.wav")
+        ]
+
+        for sound in self.player.walk_sounds:
+            sound.set_volume(0.3)
+    
+    def handle_input(self):
+        keys = pygame.key.get_pressed()
+
+        dx = 0
+        dy = 0
+        
+        if not self.player.canMove:
+            return
+
+        self.player.walking = False
+
+        # movement
+        if keys[pygame.K_UP]:
+            dy -= 1
+            self.player.direction = "up"
+            self.player.walking = True
+
+        elif keys[pygame.K_DOWN]:
+            dy += 1
+            self.player.direction = "down"
+            self.player.walking = True
+
+        if keys[pygame.K_LEFT]:
+            dx -= 1
+            self.player.direction = "left"
+            self.player.walking = True
+
+        elif keys[pygame.K_RIGHT]:
+            dx += 1
+            self.player.direction = "right"
+            self.player.walking = True
+
+        direction = pygame.math.Vector2(dx, dy)
+
+        if direction.length() > 0:
+            direction = direction.normalize()
+
+        self.player.save_location()
+
+        self.player.position[0] += direction.x * self.player.speed
+        self.player.position[1] += direction.y * self.player.speed
+
+        self.player.animate()
+    
+    def check_collision_with_list(self, obj):
+        # verification collision
+        return self.player.feet.collidelist(obj) > -1
+
+    def get_colliding_item(self, list):
+        for item in list:
+            if self.player.feet.colliderect(item):
+                return item
+        return None
+    
+    def get_colliding_painting_name(self):
+        for name, rect in self.paintings.items():
+            if self.player.feet.colliderect(rect):
+                return name
+        return None
+
+    def check_painting_choice(self, mouse_pos):
+        # Find which button in the UI was clicked
+        clicked_button_index = -1
+        for i, rect in enumerate(self.current_ui.button_rects):
+            if rect.collidepoint(mouse_pos):
+                clicked_button_index = i
+
+        if clicked_button_index == 1: # They clicked "Go Back"
+            self.is_viewing_painting = False
+            self.player.canMove = True
+
+        elif clicked_button_index == 0: # They clicked "This is it"
+            actual_name = self.get_colliding_painting_name()
+            target_name = self.masterpieces[self.current_target_index]
+
+            if actual_name == target_name:
+                # CORRECT: Success animation (Green)
+                self.current_ui.trigger_feedback(0, correct=True)
+                self.paintings_found += 1
+                self.current_target_index += 1
+                print("Correct!")
+            else:
+                # WRONG: Error animation (Red)
+                self.current_ui.trigger_feedback(0, correct=False)
+                self.lives -= 1
+                print(f"Wrong! You have {self.lives} lives left.")
+    
+    def open_inventory(self):
+        self.inventory.open_sound.play()
+        self.inventory.open = not self.inventory.open
+        self.player.canMove = not self.player.canMove
+    
+    def drawing_e(self):
+        # 1. Bobbing Math
+        bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
+
+        # 2. Updated collision check for Dictionary
+        # We check if the player's feet touch ANY of the rects in our dictionary
+        near_painting = False
+        for rect in self.paintings.values():
+            if self.player.feet.colliderect(rect):
+                near_painting = True
+                break # Stop looking once we find one
+
+        near_board = self.player.feet.colliderect(self.board.rect)
+
+        # 3. Display Logic
+        if near_board or near_painting:
+            self.e_sprite.rect.midbottom = (
+                self.player.rect.centerx, 
+                self.player.rect.top - 10 + bobbing_offset # Applied to Y for vertical bobbing
+            )
+        else:
+            self.e_sprite.rect.topleft = (-500, -500)
+    
+    def run(self):
+        self.player.save_location()
+        self.handle_input()
+
+        # 1. Draw the World (Bottom Layer)
+        self.group.update()
+        self.group.center(self.player.rect.center)
+        self.group.draw(self.screen)
+
+        # 2. Draw World Objects (Middle Layer)
+        self.board.draw(self.screen)
+        self.drawing_e()
+
+        # 3. Draw the UI (Top Layer)
+        # We draw this LAST so it covers the player and the map
+        if self.is_viewing_painting:
+            pygame.mouse.set_visible(True)
+            finished = self.current_ui.draw(self.screen)
+            
+            if finished:
+                self.is_viewing_painting = False
+                self.player.canMove = True
+                pygame.mouse.set_visible(False) # Hide mouse when going back to walking
+                
+                if self.lives <= 0:
+                    print("Game Over Logic")
+        else:
+            # If not viewing a painting, make sure the mouse stays hidden
+            pygame.mouse.set_visible(False)
+
+        if self.check_collision_with_list(self.walls):
+            self.player.move_back()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_e and not self.inventory.open:
+                    if self.is_viewing_painting:
+                        # Close the "Zoom" view
+                        self.is_viewing_painting = False
+                        self.player.canMove = True
+                    else:
+                        # 1. Find the name of the painting the player is touching
+                        p_name = self.get_colliding_painting_name()
+                        
+                        if p_name in self.paintings_data:
+                            self.is_viewing_painting = True
+                            self.player.canMove = False
+                            # 2. Store the NAME instead of the RECT
+                            self.current_painting_name = p_name 
+                            
+                            # 3. Create the UI for this specific painting
+                            data = self.paintings_data[p_name]
+                            # Assuming you use your PaintingUI class here:
+                            self.current_ui = PaintingUI(data["image"])
+                        else:
+                            print(f"Warning: No data found for painting named '{p_name}'")
+
+                if event.key == pygame.K_q:
+                    pygame.quit()
+                
+                if event.key == pygame.K_i:
+                    self.open_inventory()
+
+            if event.type == pygame.MOUSEBUTTONDOWN and self.is_viewing_painting:
+                # This checks if they clicked the "This is it" button
+                self.check_painting_choice(event.pos)
+
+        pygame.display.update()

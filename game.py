@@ -2,6 +2,7 @@ import pygame
 import pytmx
 import pyscroll
 
+from paintingLevel import PaintingLevel
 from player import Player
 from dialogue import Dialogue
 from level1 import Level1
@@ -185,7 +186,12 @@ class Game:
                     self.enter_door(["En ho.", "Must tems!"])
                     self.map = "level1"
                     timer = CountdownTimer(100)
-                    level1 = Level1(timer)
+                    level1 = Level1(timer, self.screen)
+
+                if self.check_collision_with_door(self.doors[1]):
+                    self.enter_door(["En ho.", "Must tems!"])
+                    self.map = "paintingLevel"
+                    painting_level = PaintingLevel(self.screen)
 
                 if self.check_collision_with_tunnel(self.tunnels[0]):
                     self.enter_door(["Entering the tunnel...", "Be careful, it's dark in there!"])
@@ -199,6 +205,9 @@ class Game:
                 
             elif self.map == "level1":
                 level1.run()
+            
+            elif self.map == "paintingLevel":
+                painting_level.run()
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

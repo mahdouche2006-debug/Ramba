@@ -9,6 +9,12 @@
  <tileset firstgid="1585" name="SmallItems" tilewidth="16" tileheight="16" tilecount="256" columns="16">
   <image source="tilsets/home tileset/Top-Down_Retro_Interior/TopDownHouse_SmallItems 32px.png" width="256" height="256"/>
  </tileset>
+ <tileset firstgid="1841" name="padestal 0" tilewidth="33" tileheight="52" tilecount="1" columns="1">
+  <image source="images/padestal 0.png" width="33" height="52"/>
+ </tileset>
+ <tileset firstgid="1842" name="barnous new colors" tilewidth="32" tileheight="32" tilecount="1" columns="1">
+  <image source="images/barnous new colors.png" width="32" height="32"/>
+ </tileset>
  <layer id="2" name="floor" width="75" height="40" opacity="0.9">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
