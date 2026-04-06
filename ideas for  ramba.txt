@@ -49,4 +49,5 @@ change the opacity of the screen for the transition ok
 
 for the midterm presentation:
 	intergrate all the mechanics (timer/narrartive)
+
 	

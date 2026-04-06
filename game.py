@@ -2,6 +2,7 @@ import pygame
 import pytmx
 import pyscroll
 
+from musicLevel import MusicLevel
 from paintingLevel import PaintingLevel
 from player import Player
 from dialogue import Dialogue
@@ -34,6 +35,13 @@ class Game:
 
         # by default world
         self.map = "world"
+
+        self.current_level = None
+
+        # create boolean for each level to know if the payer won the level or not
+        self.level1_completed = False
+        self.painting_level_completed = False
+        self.music_level_completed = False
 
         self.walls = []
         self.side_stairs = []
@@ -161,6 +169,63 @@ class Game:
             dialogue.draw(self.screen)
             pygame.display.flip()
 
+    def try_enter_level(self, level_name, level_class, completed_flag, msg, timer_val=None):
+        if not completed_flag:
+            self.enter_door(msg)
+            self.map = level_name
+            
+            # Move player so they aren't on the door when they return
+            if level_name == "level1":
+                self.player.position[0] -= 30
+            else:
+                self.player.position[1] -= 30 
+            
+            # Initialize the level
+            if timer_val:
+                timer = CountdownTimer(timer_val)
+                self.current_level = level_class(timer, self.screen, self)
+            else:
+                self.current_level = level_class(self.screen, self)
+        else:
+            self.enter_door(["You already completed this!", "Go explore!"])
+            if level_name == "level1":
+                self.player.position[0] -= 30
+            else:
+                self.player.position[1] -= 30
+    
+    def update_world(self):
+
+        self.player.save_location()
+        self.handle_input()
+        self.group.update()
+        self.group.center(self.player.rect)
+        self.group.draw(self.screen)
+        
+        if self.check_collision_with_list(self.walls):
+            self.player.move_back()
+
+        # --- DOOR COLLISIONS (Cleaned up using the helper) ---
+        
+        if self.check_collision_with_door(self.doors[0]):
+            self.try_enter_level("level1", Level1, self.level1_completed, ["Welcome to the Museum.", "Choose carefully! Or you'll be stuck!"], 40)
+
+        if self.check_collision_with_door(self.doors[1]):
+            self.try_enter_level("paintingLevel", PaintingLevel, self.painting_level_completed, ["Art Gallery!", "Look Closely, and be careful!", "Find all 5 paintings!"])
+
+        if self.check_collision_with_door(self.doors[2]):
+            self.try_enter_level("musicLevel", MusicLevel, self.music_level_completed, ["Music Hall!", "Listen closely."])
+
+        # --- TUNNEL COLLISIONS ---
+        if self.check_collision_with_tunnel(self.tunnels[0]):
+            self.enter_door(["Entering the tunnel...", "Be careful!"])
+            self.player.position[0] = self.tunnel2.x
+            self.player.position[1] = self.tunnel2.y - 54
+        
+        if self.check_collision_with_tunnel(self.tunnels[1]):
+            self.enter_door(["Leaving the tunnel...", "You were lucky!"])
+            self.player.position[0] = self.tunnel1.x
+            self.player.position[1] = self.tunnel1.y + 32
+
     def run(self):
         clock = pygame.time.Clock()
         fps = 60
@@ -168,56 +233,26 @@ class Game:
         running = True
         
         while running:
-
+            events = pygame.event.get()
+            
             pygame.mouse.set_visible(False)
             
             if self.map == "world":
-
-                self.player.save_location()
-                self.handle_input()
-                self.group.update()
-                self.group.center(self.player.rect)
-                self.group.draw(self.screen)
+                self.update_world()
                 
-                if self.check_collision_with_list(self.walls):
-                    self.player.move_back()
-
-                if self.check_collision_with_door(self.doors[0]):
-                    self.enter_door(["En ho.", "Must tems!"])
-                    self.map = "level1"
-                    timer = CountdownTimer(100)
-                    level1 = Level1(timer, self.screen)
-
-                if self.check_collision_with_door(self.doors[1]):
-                    self.enter_door(["En ho.", "Must tems!"])
-                    self.map = "paintingLevel"
-                    painting_level = PaintingLevel(self.screen)
-
-                if self.check_collision_with_tunnel(self.tunnels[0]):
-                    self.enter_door(["Entering the tunnel...", "Be careful, it's dark in there!"])
-                    self.player.position[0] = self.tunnel2.x
-                    self.player.position[1] = self.tunnel2.y - 54
-                
-                if self.check_collision_with_tunnel(self.tunnels[1]):
-                    self.enter_door(["Leaving the tunnel...", "You were lucky this time..."])
-                    self.player.position[0] = self.tunnel1.x
-                    self.player.position[1] = self.tunnel1.y + 32
-                
-            elif self.map == "level1":
-                level1.run()
+            else:
+                if self.current_level:
+                    self.current_level.update(events)
             
-            elif self.map == "paintingLevel":
-                painting_level.run()
-            
-            for event in pygame.event.get():
+            for event in events:
                 if event.type == pygame.QUIT:
                     running = False
                 
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:    
+                    if event.key == pygame.K_q:
                         running = False
 
-            pygame.display.flip()
+            pygame.display.update()
 
             clock.tick(fps)
 

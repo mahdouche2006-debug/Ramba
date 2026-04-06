@@ -13,10 +13,10 @@ from enigmaUI import EnigmaUI
 
 
 class Level1:
-    def __init__(self, timer, screen):
+    def __init__(self, timer, screen, game_instance):
         # cree la fenetre du jeu
         self.screen = screen
-
+        self.game = game_instance
         # charger la carte (tmx)
         tmx_data = pytmx.util_pygame.load_pygame('one chamber.tmx')
         map_data = pyscroll.data.TiledMapData(tmx_data)
@@ -89,19 +89,39 @@ class Level1:
         ]
 
         for sound in self.player.walk_sounds:
-            sound.set_volume(0.3)
+            sound.set_volume(0.4)
 
         # dictionary for the enigma UI
         self.enigma_data = {
             "TheThinker": {
                 "options": ["Auguste Rodin", "Michelangelo", "Banksy"],
                 "correct": 0,
-                "image": pygame.image.load("images/TheThinker.jpg").convert_alpha()
+                "image": pygame.transform.scale(pygame.image.load("images/TheThinker.jpg").convert_alpha(), (400, 300))
             },
             "David": {
                 "options": ["Donatello", "Bernini", "Michelangelo"],
                 "correct": 2,
-                "image": pygame.image.load("images/David.jpg").convert_alpha()
+                "image": pygame.transform.scale(pygame.image.load("images/David.jpg").convert_alpha(), (400, 300))
+            },
+            "Pieta": {
+                "options": ["Michelangelo", "R. Smithson", "A. Savage"],
+                "correct": 0,
+                "image": pygame.transform.scale(pygame.image.load("images/Pieta.jpg").convert_alpha(), (400, 300))
+            },
+            "ChristTheRedeemer": {
+                "options": ["Lee Bontecou", "P. Landowski", "Ruth Asawa"],
+                "correct": 1,
+                "image": pygame.transform.scale(pygame.image.load("images/ChristTheRedeemer.jpg").convert_alpha(), (400, 300))
+            },
+            "Medusa": {
+                "options": ["Bernini", "D. Judd", "Eva Hesse"],
+                "correct": 0,
+                "image": pygame.transform.scale(pygame.image.load("images/Medusa.jpg").convert_alpha(), (400, 300))
+            },
+            "VenusDeMilo": {
+                "options": ["Sol LeWitt", "Alexandros", "T. Eakins"],
+                "correct": 1,
+                "image": pygame.transform.scale(pygame.image.load("images/VenusDeMilo.jpg").convert_alpha(), (400, 300))
             },
         }
 
@@ -216,10 +236,12 @@ class Level1:
                 # CORRECT: Trigger green shake
                 self.current_ui.trigger_shake_anim(clicked_index, correct=True)
                 self.add_sculpture_to_inventory(self.get_colliding_item(self.sculptures))
+                self.timer.duration += 5
                 # You could add your "Clay Collected" logic here!
             else:
                 # WRONG: Trigger red shake and set lock
                 self.current_ui.trigger_shake_anim(clicked_index, correct=False)
+                self.timer.duration -= 10
                 
                 sculpture = self.get_colliding_item(self.sculptures)
                 if sculpture:
@@ -261,7 +283,8 @@ class Level1:
             self.current_ui = EnigmaUI(data["image"], data["options"], data["correct"])
             self.is_viewing_enigma = True
 
-    def run(self):
+    def update(self, events):
+
         self.player.save_location()
     
         # Only allow movement if NOT in a menu
@@ -294,7 +317,7 @@ class Level1:
 
         self.drawing_e()
 
-        for event in pygame.event.get():
+        for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
 
@@ -333,19 +356,19 @@ class Level1:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.is_viewing_enigma:
                     self.check_enigma_answer(event.pos)
-            
-       
+        
+        text = self.font.render(f"Items: {self.items_collected}/6", True, (255, 255, 255))
+        self.screen.blit(text, (self.screen.get_width() - 250, 10))
         # return to world when all items are collected
-        if self.items_collected == 8:
+        if self.items_collected == 3:
             self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
-            game.Game().map = "world"
-            game.Game().run()
+            self.game.map = "world"
+            self.game.level1_completed = True
 
         if self.timer.remaining_time <= 0:
             self.ending_the_level(["Time's up! Returning to world map..."])
-            game.Game().map = "world"
-            game.Game().run() # Return to world map (adjust as needed)
-        
+            self.game.map = "world"
+
         
         if self.is_viewing_enigma:
             pygame.mouse.set_visible(True)

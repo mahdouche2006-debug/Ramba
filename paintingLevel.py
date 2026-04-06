@@ -3,17 +3,19 @@ import pytmx
 import pyscroll
 import math
 
+import game
+
 from board import Board
-from enigmaUI import EnigmaUI
-from enigmaUI import EnigmaUI
+from dialogue import Dialogue
 from inventory import Inventory
 from item import Item
 from player import Player
 from paintingUI import PaintingUI
 
 class PaintingLevel:
-    def __init__(self, screen):
+    def __init__(self, screen, game_instance):
         self.screen = screen
+        self.game = game_instance
         # charger la carte (tmx)
         tmx_data = pytmx.util_pygame.load_pygame('paintingLevel.tmx')
         map_data = pyscroll.data.TiledMapData(tmx_data)
@@ -101,6 +103,9 @@ class PaintingLevel:
 
         for sound in self.player.walk_sounds:
             sound.set_volume(0.3)
+
+        # In __init__
+        self.hud_font = pygame.font.Font("fonts/Pixel Emulator.otf", 30)
     
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -149,12 +154,6 @@ class PaintingLevel:
     def check_collision_with_list(self, obj):
         # verification collision
         return self.player.feet.collidelist(obj) > -1
-
-    def get_colliding_item(self, list):
-        for item in list:
-            if self.player.feet.colliderect(item):
-                return item
-        return None
     
     def get_colliding_painting_name(self):
         for name, rect in self.paintings.items():
@@ -189,11 +188,6 @@ class PaintingLevel:
                 self.lives -= 1
                 print(f"Wrong! You have {self.lives} lives left.")
     
-    def open_inventory(self):
-        self.inventory.open_sound.play()
-        self.inventory.open = not self.inventory.open
-        self.player.canMove = not self.player.canMove
-    
     def drawing_e(self):
         # 1. Bobbing Math
         bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
@@ -217,7 +211,70 @@ class PaintingLevel:
         else:
             self.e_sprite.rect.topleft = (-500, -500)
     
-    def run(self):
+    def draw_stats(self):
+        # 1. Prepare the strings
+        # We use 5 as the max since you mentioned 5 target paintings
+        lives_text = f"LIVES: {self.lives}"
+        progress_text = f"FOUND: {self.paintings_found}/5"
+
+        # 2. Render the text surfaces
+        # Using white (255, 255, 255) for high visibility on the dark map
+        lives_surf = self.hud_font.render(lives_text, True, (220, 20, 60)) # Crimson Red for lives
+        progress_surf = self.hud_font.render(progress_text, True, (255, 215, 0)) # Gold for progress
+
+        # 3. Blit to the screen corners
+        # Padding of 20 pixels from the edges
+        self.screen.blit(lives_surf, (20, 20))
+        
+        # Position progress on the top right
+        progress_x = self.screen.get_width() - progress_surf.get_width() - 20
+        self.screen.blit(progress_surf, (progress_x, 20))
+    
+    def ending_the_level(self, message):
+        dialogue = Dialogue(message)
+        dialogue.start()
+        self.screen.fill((0, 0, 0)) 
+        while dialogue.active:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        pygame.quit()
+                    if event.key == pygame.K_c:
+                        self.screen.fill((0, 0, 0)) 
+
+                dialogue.handle_event(event)
+            dialogue.update()
+            dialogue.draw(self.screen)
+            pygame.display.flip()
+
+    def open_board(self):
+        self.board.open_sound.play()
+        self.board.open = not self.board.open
+        # If the board is now open, player cannot move. If closed, they can.
+        self.player.canMove = not self.board.open
+
+    def open_inventory(self):
+        self.inventory.open_sound.play()
+        self.inventory.open = not self.inventory.open
+        self.player.canMove = not self.inventory.open
+    
+    def create_painting_ui(self, p_name):
+        # Only open if board is NOT open
+        if not self.board.open:
+            try:
+                # Constructing path dynamically as you did:
+                img_path = "images/" + p_name + ".png"
+                self.current_ui = PaintingUI(pygame.image.load(img_path).convert_alpha())
+                
+                self.is_viewing_painting = True
+                self.player.canMove = False
+                self.current_painting_name = p_name
+            except pygame.error:
+                print(f"Error: Could not find {p_name}.png")
+            
+    def update(self, events):
         self.player.save_location()
         self.handle_input()
 
@@ -225,6 +282,8 @@ class PaintingLevel:
         self.group.update()
         self.group.center(self.player.rect.center)
         self.group.draw(self.screen)
+
+        self.draw_stats() # Draw stats on top of the world but below the UI
 
         # 2. Draw World Objects (Middle Layer)
         self.board.draw(self.screen)
@@ -250,32 +309,26 @@ class PaintingLevel:
         if self.check_collision_with_list(self.walls):
             self.player.move_back()
 
-        for event in pygame.event.get():
+        for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
-                
-            if event.type == pygame.KEYDOWN:
+
+            if event.type == pygame.KEYDOWN:   
                 if event.key == pygame.K_e and not self.inventory.open:
+                    # --- CASE 1: Close Painting UI ---
                     if self.is_viewing_painting:
-                        # Close the "Zoom" view
                         self.is_viewing_painting = False
                         self.player.canMove = True
-                    else:
-                        # 1. Find the name of the painting the player is touching
-                        p_name = self.get_colliding_painting_name()
                         
-                        if p_name in self.paintings_data:
-                            self.is_viewing_painting = True
-                            self.player.canMove = False
-                            # 2. Store the NAME instead of the RECT
-                            self.current_painting_name = p_name 
-                            
-                            # 3. Create the UI for this specific painting
-                            data = self.paintings_data[p_name]
-                            # Assuming you use your PaintingUI class here:
-                            self.current_ui = PaintingUI(data["image"])
-                        else:
-                            print(f"Warning: No data found for painting named '{p_name}'")
+                    # --- CASE 2: Board Interaction ---
+                    elif self.player.feet.colliderect(self.board.rect):
+                        self.open_board()
+
+                    # --- CASE 3: Painting Interaction ---
+                    else:
+                        p_name = self.get_colliding_painting_name()
+                        if p_name:
+                            self.create_painting_ui(p_name)
 
                 if event.key == pygame.K_q:
                     pygame.quit()
@@ -287,4 +340,12 @@ class PaintingLevel:
                 # This checks if they clicked the "This is it" button
                 self.check_painting_choice(event.pos)
 
-        pygame.display.update()
+        if self.paintings_found == 5:
+            self.ending_the_level(["Congratulations! You've found all the masterpieces!", "Press c to return to world map..."])
+            self.game.map = "world" # Return to world map after ending
+            self.game.painting_level_completed = True
+
+        if self.lives <= 0:
+            self.ending_the_level(["You've lost all your lives!", "Game Over.", ";)", ":)", "                  :)"])
+            self.game.map = "world" # Return to world map after ending
+
