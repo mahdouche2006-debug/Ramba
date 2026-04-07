@@ -1,13 +1,20 @@
+import math
+import random
+
 import pygame
 import pytmx
 import pyscroll
 
+from item import Item
 from player import Player
+from inventory import Inventory
 
 class MusicLevel:
     def __init__(self, screen, game_instance):
         self.screen = screen
         self.game = game_instance
+        
+        self.game.music.stop()
 
         tmx_data = pytmx.util_pygame.load_pygame("tilsets/rayenTileset/best-version-so-far.tmx")
         map_data = pyscroll.data.TiledMapData(tmx_data) 
@@ -18,99 +25,187 @@ class MusicLevel:
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
         self.player = Player(player_position.x, player_position.y)
-        self.player.animations = {
-            "left": [
-                self.player.load_image("player/Player64/playerleft2.png"),
-                self.player.load_image("player/Player64/player_stop_left.png"),
-                self.player.load_image("player/Player64/playerleft1.png"),
-                self.player.load_image("player/Player64/player_stop_left.png")
-            ],
-            "right": [
-                self.player.load_image("player/Player64/playerright2.png"),
-                self.player.load_image("player/Player64/player_stop_right.png"),
-                self.player.load_image("player/Player64/playerright1.png"),
-                self.player.load_image("player/Player64/player_stop_right.png")
-            ],
-            "up": [
-                self.player.load_image("player/Player64/playerup1.png"),
-                self.player.load_image("player/Player64/player_stop_up.png"),
-                self.player.load_image("player/Player64/playerup2.png"),
-                self.player.load_image("player/Player64/player_stop_up.png")
-            ],
-            "down": [
-                self.player.load_image("player/Player64/playerdown1.png"),
-                self.player.load_image("player/Player64/player_stop_down.png"),
-                self.player.load_image("player/Player64/playerdown2.png"),
-                self.player.load_image("player/Player64/player_stop_down.png")
-            ]
-        }
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=0)
         self.group.add(self.player) 
 
+        # Load the image
+        original_e = pygame.image.load("images/e.png").convert_alpha()
+
+        # Scale it to 32x32 pixels
+        self.e_image = pygame.transform.scale(original_e, (16, 16))
+
+        # Create the E prompt as a Sprite
+        self.e_sprite = pygame.sprite.Sprite()
+        self.e_sprite.image = self.e_image
+        self.e_sprite.rect = self.e_image.get_rect()
+
+        # Start it off-screen so it's hidden
+        self.e_sprite.rect.topleft = (-100, -100)
+        self.group.add(self.e_sprite)
+
         self.walls = []
+        self.instruments = []
+
+        self.instrument_sequence = ["Guitar", "Maracas", "Flute", "Banjo"]
+        self.current_index = 0
+
+        self.current_target = None  # The instrument the player needs to find
+        self.shake_amount = 0       # For the shake animation
+        self.womp_sound = pygame.mixer.Sound("music/womp-womp.mp3") # Add your fail sound path
+
         for obj in tmx_data.objects:
 
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+            
+            if obj.type == "instrument":
+                instrument = Item(f"instruments/{obj.name}", obj.x, obj.y)
+                instrument.name = obj.name # Store the name for later comparison
+                self.instruments.append(instrument)
+                self.group.add(instrument)
+            
+            if obj.name == "Podium":
+                self.podium = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
+
+        self.inventory = Inventory()
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
-
-        dx = 0
-        dy = 0
-        
-        if not self.player.canMove:
-            return
-
+        dx, dy = 0, 0
+        if not self.player.canMove: return
         self.player.walking = False
 
-        # movement
-        if keys[pygame.K_UP]:
-            dy -= 1
-            self.player.direction = "up"
-            self.player.walking = True
-
-        elif keys[pygame.K_DOWN]:
-            dy += 1
-            self.player.direction = "down"
-            self.player.walking = True
-
-        if keys[pygame.K_LEFT]:
-            dx -= 1
-            self.player.direction = "left"
-            self.player.walking = True
-
-        elif keys[pygame.K_RIGHT]:
-            dx += 1
-            self.player.direction = "right"
-            self.player.walking = True
+        if keys[pygame.K_UP]: dy -= 1; self.player.direction = "up"; self.player.walking = True
+        elif keys[pygame.K_DOWN]: dy += 1; self.player.direction = "down"; self.player.walking = True
+        if keys[pygame.K_LEFT]: dx -= 1; self.player.direction = "left"; self.player.walking = True
+        elif keys[pygame.K_RIGHT]: dx += 1; self.player.direction = "right"; self.player.walking = True
 
         direction = pygame.math.Vector2(dx, dy)
-
         if direction.length() > 0:
             direction = direction.normalize()
+            self.player.position[0] += direction.x * self.player.speed
+            self.player.position[1] += direction.y * self.player.speed
+            self.player.animate()
 
-        self.player.save_location()
+    def get_colliding_item(self, list):
+        for item in list:
+            if self.player.feet.colliderect(item.rect):
+                return item
+        return None
 
-        self.player.position[0] += direction.x * self.player.speed
-        self.player.position[1] += direction.y * self.player.speed
-
-        self.player.animate()
-    
     def check_collision_with_list(self, obj):
         # verification collision
         return self.player.feet.collidelist(obj) > -1
+
+    def remove_instrument_from_list(self, item):
+        self.group.remove(item)
+        self.instruments.remove(item)
+
+    def add_instrument_to_inventory(self, item):
+        if item:
+            self.remove_instrument_from_list(item)
+            self.inventory.add_item(item)
+
+    def drawing_e(self):
+        # 1. Get a shifting offset based on time
+        # pygame.time.get_ticks() gives us the time in milliseconds
+        # We divide by 200 to control the speed of the bobbing
+        bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
+
+        near_instrument = self.get_colliding_item(self.instruments)
+        near_podium = self.player.feet.colliderect(self.podium)
+        if near_instrument or near_podium:
+            # Position the E sprite relative to the player's WORLD coordinates
+            # Pyscroll will automatically scale this by 3x and offset it for the camera
+            self.e_sprite.rect.midbottom = (
+                self.player.rect.centerx + bobbing_offset, 
+                self.player.rect.top - 10
+            )
+        else:
+            # Hide it when not near anything
+            self.e_sprite.rect.topleft = (-500, -500)
+
+    def play_next_challenge(self):
+        """Play the next instrument sound in the fixed sequence."""
+        
+        # Check if we have finished all instruments in the list
+        if self.current_index < len(self.instrument_sequence):
+            target_name = self.instrument_sequence[self.current_index]
+            
+            # Find the actual Item object in self.instruments that matches this name
+            for inst in self.instruments:
+                if inst.name == target_name:
+                    self.current_target = inst
+                    break
+            
+            # Play the sound
+            sound_path = f"music/instSound/{target_name}/{target_name}.mp3"
+            try:
+                pygame.mixer_music.load(sound_path)
+                pygame.mixer_music.play()
+                print(f"Challenge started: Find the {target_name}")
+            except Exception as e:
+                print(f"Sound error: {e}")
+        else:
+            print("Level Complete! You've found all instruments.")
+
+    def handle_interaction(self):
+        """Logic for pressing E"""
+        # 1. Check Podium Interaction
+        if self.player.feet.colliderect(self.podium):
+            # Only play next challenge if we don't have one active
+            if not self.current_target:
+                self.play_next_challenge()
+            return
+
+        # 2. Check Instrument Interaction
+        item = self.get_colliding_item(self.instruments)
+        if item:
+            if item == self.current_target:
+                # SUCCESS
+                self.add_instrument_to_inventory(item)
+                self.current_target = None 
+                self.current_index += 1
+                print("Correct! Go back to the podium for the next one.")
+            else:
+                # WRONG INSTRUMENT - Localized Shake
+                item.shake_timer = 20 # Number of frames to shake
+                self.womp_sound.play()
+                print("Wrong instrument! Womp Womp.")
 
     def update(self, events): 
         self.player.save_location()
 
         self.handle_input()
 
+        for inst in self.instruments:
+            if hasattr(inst, 'shake_timer') and inst.shake_timer > 0:
+                inst.shake_timer -= 1
+                # Generate a random offset for the shake effect
+                offset_x = random.randint(-4, 4)
+                offset_y = random.randint(-4, 4)
+                # Apply offset to the actual rect temporarily for the draw call
+                inst.rect.x += offset_x
+                inst.rect.y += offset_y
+                
+                # Note: We reset this after the draw or in the next frame 
+                # to prevent the instrument from "walking" away.
+                # A cleaner way is to store the original pos:
+                if not hasattr(inst, 'original_pos'):
+                    inst.original_pos = (inst.rect.x - offset_x, inst.rect.y - offset_y)
+
         self.group.update()
         self.group.center(self.player.rect)
         self.group.draw(self.screen)
+
+        for inst in self.instruments:
+            if hasattr(inst, 'original_pos'):
+                inst.rect.topleft = inst.original_pos
+                delattr(inst, 'original_pos')
+
+        self.drawing_e()
 
         if self.check_collision_with_list(self.walls):
             self.player.move_back()
@@ -122,5 +217,15 @@ class MusicLevel:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     pygame.quit()
+
+                if event.key == pygame.K_i:
+                    self.inventory.open = not self.inventory.open
+
+                if event.key == pygame.K_e and not self.inventory.open:
+                    
+                    self.handle_interaction()
+
+        if self.inventory.open:
+            self.inventory.draw(self.screen)
 
         

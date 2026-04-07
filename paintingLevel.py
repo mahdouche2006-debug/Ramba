@@ -86,13 +86,14 @@ class PaintingLevel:
         # Dictionary of painting details
         self.paintings_data = {
             "Monalisa": {
-                "clue": "Find the lady with the mysterious smile.",        
+                "clue": "Find the lady with the mysterious smile.",
                 "image": pygame.image.load("images/Monalisa.png")
-            },           
+            },
         }
 
         # font
         self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
+        self.hud_font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 40)
 
         # change the soud of the footsteps
         self.player.walk_sounds = [
@@ -102,10 +103,9 @@ class PaintingLevel:
         ]
 
         for sound in self.player.walk_sounds:
-            sound.set_volume(0.3)
+            sound.set_volume(0.45)
 
-        # In __init__
-        self.hud_font = pygame.font.Font("fonts/Pixel Emulator.otf", 30)
+       
     
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -218,7 +218,6 @@ class PaintingLevel:
         progress_text = f"FOUND: {self.paintings_found}/5"
 
         # 2. Render the text surfaces
-        # Using white (255, 255, 255) for high visibility on the dark map
         lives_surf = self.hud_font.render(lives_text, True, (220, 20, 60)) # Crimson Red for lives
         progress_surf = self.hud_font.render(progress_text, True, (255, 215, 0)) # Gold for progress
 

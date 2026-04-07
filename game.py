@@ -22,6 +22,11 @@ class Game:
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
 
+        self.music = pygame.mixer_music
+        self.music.load("music/pottery level music.aif")
+        self.music.play(-1)
+        self.music.set_volume(0.5)
+
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
         self.player = Player(player_position.x, player_position.y)
@@ -178,7 +183,7 @@ class Game:
             if level_name == "level1":
                 self.player.position[0] -= 30
             else:
-                self.player.position[1] -= 30 
+                self.player.position[1] += 30 
             
             # Initialize the level
             if timer_val:
@@ -191,7 +196,7 @@ class Game:
             if level_name == "level1":
                 self.player.position[0] -= 30
             else:
-                self.player.position[1] -= 30
+                self.player.position[1] += 30
     
     def update_world(self):
 
@@ -207,7 +212,7 @@ class Game:
         # --- DOOR COLLISIONS (Cleaned up using the helper) ---
         
         if self.check_collision_with_door(self.doors[0]):
-            self.try_enter_level("level1", Level1, self.level1_completed, ["Welcome to the Museum.", "Choose carefully! Or you'll be stuck!"], 40)
+            self.try_enter_level("level1", Level1, self.level1_completed, ["Welcom.", "stuck!"], 40)
 
         if self.check_collision_with_door(self.doors[1]):
             self.try_enter_level("paintingLevel", PaintingLevel, self.painting_level_completed, ["Art Gallery!", "Look Closely, and be careful!", "Find all 5 paintings!"])

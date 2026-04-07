@@ -9,16 +9,19 @@ class PaintingUI:
                                                    pygame.display.get_surface().get_height()//2))
         
         self.painting_img = painting_image
-        self.painting_img = pygame.transform.scale(self.painting_img, ( 400, 300)) # Scale to fit nicely in the UI
+        self.painting_img = pygame.transform.scale(self.painting_img, (600, 350)) # Scale to fit nicely in the UI
         self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 25)
         
         # 2. Buttons: 0 = "This is it", 1 = "Go Back"
-        offset_y = 400
+        offset_y = 630
         self.button_rects = [
-            pygame.Rect(self.rect.x + 50, self.rect.y + offset_y, 300, 100), # Confirm
-            pygame.Rect(self.rect.x + 250, self.rect.y + offset_y, 300, 100)  # Exit
+            # 1. "Confirm" (Left Box) - Align over frame
+            pygame.Rect(self.rect.x + 200, self.rect.y + offset_y, 300, 100), 
+            
+            # 2. "Exit" (Right Box) - Corrected to align further right
+            pygame.Rect(self.rect.x + 500, self.rect.y + offset_y, 300, 100) 
         ]
-        self.options = ["This is it", "Go Back"]
+        self.options = ["Choose", "Go Back"]
         
         # 3. Animation State
         self.clicked_index = None
