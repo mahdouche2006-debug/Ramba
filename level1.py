@@ -360,7 +360,7 @@ class Level1:
         text = self.font.render(f"Items: {self.items_collected}/6", True, (255, 255, 255))
         self.screen.blit(text, (self.screen.get_width() - 250, 10))
         # return to world when all items are collected
-        if self.items_collected == 3:
+        if self.items_collected == 6:
             self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
             self.game.map = "world"
             self.game.level1_completed = True

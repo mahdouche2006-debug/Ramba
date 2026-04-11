@@ -3,14 +3,12 @@ import pytmx
 import pyscroll
 import math
 
-import game
-
 from board import Board
 from dialogue import Dialogue
 from inventory import Inventory
-from item import Item
 from player import Player
 from paintingUI import PaintingUI
+from paintingClue import PaintingClue
 
 class PaintingLevel:
     def __init__(self, screen, game_instance):
@@ -29,6 +27,11 @@ class PaintingLevel:
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=2)
         self.group.add(self.player)
+
+        self.music = pygame.mixer_music
+        self.music.load("music/Gallery theme.mp3")
+        self.music.play(-1)
+        self.music.set_volume(0.5)
 
         # Load the image
         original_e = pygame.image.load("images/e.png").convert_alpha()
@@ -74,7 +77,7 @@ class PaintingLevel:
         self.current_painting_rect = None # Tracks which painting the player is looking at
 
         # The 5 paintings the player MUST find
-        self.masterpieces = ["Monalisa", "Starry Night", "The Scream", "Guernica", "Las Meninas"]
+        self.masterpieces = ["Monalisa", "TheScream", "StarryNight", "Guernica", "LasMeninas"]
         self.current_target_index = 0
         self.paintings_found = 0
         self.lives = 3
@@ -89,7 +92,32 @@ class PaintingLevel:
                 "clue": "Find the lady with the mysterious smile.",
                 "image": pygame.image.load("images/Monalisa.png")
             },
+            "TheScream": {
+                "clue": "Seek the figure expressing existential fear.",
+                "image": pygame.image.load("images/TheScream.png")
+            },
+            "StarryNight": {
+                "clue": "Look for the swirling night sky over a quiet town.",
+                "image": pygame.image.load("images/StarryNight.png")
+            },
+            "Guernica": {
+                "clue": "Identify the chaotic scene depicting the tragedies of war.",
+                "image": pygame.image.load("images/Guernica.png")
+            },
+            "LasMeninas": {
+                "clue": "Find the painting showing the Infanta Margarita with her attendants.",
+                "image": pygame.image.load("images/LasMeninas.png")
+            }
         }
+        
+        self.painting_clue_dialogues = []
+
+        for painting in self.paintings_data:
+            self.painting_clue_dialogues.append(self.paintings_data[painting]["clue"])
+
+        # painting clue creation
+        self.painting_clue = PaintingClue(self.screen, self.game, self.painting_clue_dialogues)
+        self.painting_clue.dialogues.append("Congratulations! You've found all the masterpieces!")
 
         # font
         self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
@@ -104,8 +132,6 @@ class PaintingLevel:
 
         for sound in self.player.walk_sounds:
             sound.set_volume(0.45)
-
-       
     
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -181,6 +207,7 @@ class PaintingLevel:
                 self.current_ui.trigger_feedback(0, correct=True)
                 self.paintings_found += 1
                 self.current_target_index += 1
+                self.painting_clue.current_dialogue_idx += 1 # Move to the next clue for the next painting
                 print("Correct!")
             else:
                 # WRONG: Error animation (Red)
@@ -270,6 +297,7 @@ class PaintingLevel:
                 self.is_viewing_painting = True
                 self.player.canMove = False
                 self.current_painting_name = p_name
+
             except pygame.error:
                 print(f"Error: Could not find {p_name}.png")
             
@@ -288,6 +316,8 @@ class PaintingLevel:
         self.board.draw(self.screen)
         self.drawing_e()
 
+        self.painting_clue.update()
+
         # 3. Draw the UI (Top Layer)
         # We draw this LAST so it covers the player and the map
         if self.is_viewing_painting:
@@ -299,8 +329,6 @@ class PaintingLevel:
                 self.player.canMove = True
                 pygame.mouse.set_visible(False) # Hide mouse when going back to walking
                 
-                if self.lives <= 0:
-                    print("Game Over Logic")
         else:
             # If not viewing a painting, make sure the mouse stays hidden
             pygame.mouse.set_visible(False)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="100" height="70" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="185">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="100" height="70" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="189">
  <tileset firstgid="1" source="tilsets/tilesetLouay/map2.tsx"/>
  <tileset firstgid="6145" name="map" tilewidth="16" tileheight="16" tilecount="6144" columns="96">
   <image source="tilsets/tilesetLouay/map.png" width="1536" height="1024"/>
@@ -383,5 +383,8 @@
   <object id="181" x="342" y="892" width="130" height="42"/>
   <object id="182" x="208" y="865" width="54" height="23"/>
   <object id="184" x="98" y="926" width="37" height="23"/>
+  <object id="186" name="StarryNight" type="painting" x="302" y="846" width="70" height="26"/>
+  <object id="187" name="Guernica" type="painting" x="529" y="563" width="48" height="32"/>
+  <object id="188" name="LasMeninas" type="painting" x="433" y="556" width="56" height="31"/>
  </objectgroup>
 </map>

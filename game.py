@@ -154,7 +154,7 @@ class Game:
             pygame.display.update()
             pygame.time.delay(5) 
 
-    def enter_door(self, message):
+    def display_entering_message(self, message):
         self.fade_in_to_black()
         dialogue = Dialogue(message)
         dialogue.start()
@@ -176,7 +176,7 @@ class Game:
 
     def try_enter_level(self, level_name, level_class, completed_flag, msg, timer_val=None):
         if not completed_flag:
-            self.enter_door(msg)
+            self.display_entering_message(msg)
             self.map = level_name
             
             # Move player so they aren't on the door when they return
@@ -192,7 +192,7 @@ class Game:
             else:
                 self.current_level = level_class(self.screen, self)
         else:
-            self.enter_door(["You already completed this!", "Go explore!"])
+            self.display_entering_message(["You already completed this!", "Go explore!"])
             if level_name == "level1":
                 self.player.position[0] -= 30
             else:
@@ -215,19 +215,19 @@ class Game:
             self.try_enter_level("level1", Level1, self.level1_completed, ["Welcom.", "stuck!"], 40)
 
         if self.check_collision_with_door(self.doors[1]):
-            self.try_enter_level("paintingLevel", PaintingLevel, self.painting_level_completed, ["Art Gallery!", "Look Closely, and be careful!", "Find all 5 paintings!"])
+            self.try_enter_level("paintingLevel", PaintingLevel, self.painting_level_completed, ["Art Gallery!", "Look Closely, and find all 5 paintings!"])
 
         if self.check_collision_with_door(self.doors[2]):
             self.try_enter_level("musicLevel", MusicLevel, self.music_level_completed, ["Music Hall!", "Listen closely."])
 
         # --- TUNNEL COLLISIONS ---
         if self.check_collision_with_tunnel(self.tunnels[0]):
-            self.enter_door(["Entering the tunnel...", "Be careful!"])
+            self.display_entering_message(["Entering the tunnel...", "Be careful!"])
             self.player.position[0] = self.tunnel2.x
             self.player.position[1] = self.tunnel2.y - 54
         
         if self.check_collision_with_tunnel(self.tunnels[1]):
-            self.enter_door(["Leaving the tunnel...", "You were lucky!"])
+            self.display_entering_message(["Leaving the tunnel...", "You were lucky!"])
             self.player.position[0] = self.tunnel1.x
             self.player.position[1] = self.tunnel1.y + 32
 
