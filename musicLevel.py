@@ -143,8 +143,8 @@ class MusicLevel:
             # Play the sound
             sound_path = f"music/instSound/{target_name}/{target_name}.mp3"
             try:
-                pygame.mixer_music.load(sound_path)
-                pygame.mixer_music.play()
+                pygame.mixer.music.load(sound_path)
+                pygame.mixer.music.play()
                 print(f"Challenge started: Find the {target_name}")
             except Exception as e:
                 print(f"Sound error: {e}")

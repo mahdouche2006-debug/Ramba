@@ -8,7 +8,6 @@ from player import Player
 from dialogue import Dialogue
 from level1 import Level1
 from timer import CountdownTimer
-from dialogue import Dialogue
 
 class Game:
     def __init__(self):
@@ -212,7 +211,7 @@ class Game:
         # --- DOOR COLLISIONS (Cleaned up using the helper) ---
         
         if self.check_collision_with_door(self.doors[0]):
-            self.try_enter_level("level1", Level1, self.level1_completed, ["Welcom.", "stuck!"], 40)
+            self.try_enter_level("level1", Level1, self.level1_completed, ["Welcome!", "stuck!"], 40)
 
         if self.check_collision_with_door(self.doors[1]):
             self.try_enter_level("paintingLevel", PaintingLevel, self.painting_level_completed, ["Art Gallery!", "Look Closely, and find all 5 paintings!"])

@@ -50,8 +50,8 @@ class Level1:
         
         # lists
         self.walls = []
-
         self.sculptures = []
+        self.board = None
 
         for obj in tmx_data.objects:
 
@@ -76,7 +76,7 @@ class Level1:
         self.timer = timer
 
         # font
-        self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
+        self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 36)
 
         # inventory creation
         self.inventory = Inventory()
@@ -219,7 +219,7 @@ class Level1:
 
     def generate_new_item(self, item, item_name):
         new_item = Item(item_name, item.rect.x, item.rect.y)
-        self.items.append(new_item)
+        self.sculptures.append(new_item)
         self.group.add(new_item)
 
     def check_collision_between_mouse_and_buttons(self, mouse_pos):
@@ -248,6 +248,8 @@ class Level1:
                     self.sculpture_cooldowns[sculpture.name] = pygame.time.get_ticks() + 5000
 
     def open_board(self):
+        if not self.board:
+            return
         self.board.open_sound.play()
         self.board.open = not self.board.open
         self.player.canMove = not self.player.canMove
@@ -259,7 +261,7 @@ class Level1:
         bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
 
         near_sculpture = self.get_colliding_item(self.sculptures)
-        near_board = self.player.feet.colliderect(self.board.rect)
+        near_board = self.board and self.player.feet.colliderect(self.board.rect)
         if near_board or near_sculpture:
             # Position the E sprite relative to the player's WORLD coordinates
             # Pyscroll will automatically scale this by 3x and offset it for the camera
@@ -300,7 +302,8 @@ class Level1:
 
         self.inventory.draw(self.screen)
 
-        self.board.draw(self.screen)
+        if self.board:
+            self.board.draw(self.screen)
 
         if self.is_viewing_enigma:
             # 1. Draw the UI and check if it has finished its "Wrong" animation
@@ -350,7 +353,7 @@ class Level1:
                                 self.player.canMove = False 
                             # -----------------------
 
-                    if self.player.feet.colliderect(self.board.rect):
+                    if self.board and self.player.feet.colliderect(self.board.rect):
                         self.open_board()
 
             if event.type == pygame.MOUSEBUTTONDOWN:

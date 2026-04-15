@@ -307,7 +307,7 @@ class PaintingLevel:
 
         # 1. Draw the World (Bottom Layer)
         self.group.update()
-        self.group.center(self.player.rect.center)
+        self.group.center(self.player.rect)
         self.group.draw(self.screen)
 
         self.draw_stats() # Draw stats on top of the world but below the UI

@@ -16,7 +16,7 @@
   <image source="images/barnous new colors.png" width="32" height="32"/>
  </tileset>
  <tileset firstgid="1843" name="white ground" tilewidth="19" tileheight="19" tilecount="25" columns="5">
-  <image source="../../Users/HP/Downloads/white ground.png" width="96" height="96"/>
+  <image source="tilsets/white ground.png" width="96" height="96"/>
  </tileset>
  <layer id="2" name="floor" width="75" height="40" opacity="0.9">
   <data encoding="csv">
