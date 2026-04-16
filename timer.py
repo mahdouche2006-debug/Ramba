@@ -39,6 +39,6 @@ class CountdownTimer:
             else:
                 return  # skip drawing → creates blink effect
         else:
-            text_surface = self.font.render(time_text, True, (255, 255, 255))
+            text_surface = self.font.render(time_text, True, (0, 0, 0))
 
         screen.blit(text_surface, (10, 10))

@@ -18,7 +18,7 @@ class Level1:
         self.screen = screen
         self.game = game_instance
         # charger la carte (tmx)
-        tmx_data = pytmx.util_pygame.load_pygame('one chamber.tmx')
+        tmx_data = pytmx.util_pygame.load_pygame('potteryLevel.tmx')
         map_data = pyscroll.data.TiledMapData(tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
@@ -59,15 +59,13 @@ class Level1:
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
             
             elif obj.type == "sculpture":
-                sculpture = Item(obj.name, obj.x, obj.y, False)
+                sculpture = Item(obj.name, obj.x, obj.y, obj.width, obj.height, False)
+                sculpture.rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
                 self.sculptures.append(sculpture)
                 self.group.add(sculpture)
 
-            if obj.name == "board":
-                self.board = Board(obj.x, obj.y, obj.width, obj.height)
-
         
-        self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
+        self.group.change_layer(self.player, 1)
 
         # counter for items collected
         self.items_collected = 0
@@ -247,10 +245,6 @@ class Level1:
                 if sculpture:
                     self.sculpture_cooldowns[sculpture.name] = pygame.time.get_ticks() + 5000
 
-    def open_board(self):
-        self.board.open_sound.play()
-        self.board.open = not self.board.open
-        self.player.canMove = not self.player.canMove
 
     def drawing_e(self):
         # 1. Get a shifting offset based on time
@@ -259,8 +253,7 @@ class Level1:
         bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
 
         near_sculpture = self.get_colliding_item(self.sculptures)
-        near_board = self.player.feet.colliderect(self.board.rect)
-        if near_board or near_sculpture:
+        if near_sculpture:
             # Position the E sprite relative to the player's WORLD coordinates
             # Pyscroll will automatically scale this by 3x and offset it for the camera
             self.e_sprite.rect.midbottom = (
@@ -299,8 +292,6 @@ class Level1:
         self.timer.draw(self.screen)
 
         self.inventory.draw(self.screen)
-
-        self.board.draw(self.screen)
 
         if self.is_viewing_enigma:
             # 1. Draw the UI and check if it has finished its "Wrong" animation
@@ -350,14 +341,11 @@ class Level1:
                                 self.player.canMove = False 
                             # -----------------------
 
-                    if self.player.feet.colliderect(self.board.rect):
-                        self.open_board()
-
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.is_viewing_enigma:
                     self.check_enigma_answer(event.pos)
         
-        text = self.font.render(f"Items: {self.items_collected}/6", True, (255, 255, 255))
+        text = self.font.render(f"Items: {self.items_collected}/6", True, (0, 0, 0))
         self.screen.blit(text, (self.screen.get_width() - 250, 10))
         # return to world when all items are collected
         if self.items_collected == 6:

@@ -76,6 +76,50 @@ class MusicLevel:
         self.inventory = Inventory()
 
         self.instruments_collected = 0
+        
+    def handle_input(self):
+        keys = pygame.key.get_pressed()
+
+        dx = 0
+        dy = 0
+        
+        if not self.player.canMove:
+            return
+
+        self.player.walking = False
+
+        # movement
+        if keys[pygame.K_UP]:
+            dy -= 1
+            self.player.direction = "up"
+            self.player.walking = True
+
+        elif keys[pygame.K_DOWN]:
+            dy += 1
+            self.player.direction = "down"
+            self.player.walking = True
+
+        if keys[pygame.K_LEFT]:
+            dx -= 1
+            self.player.direction = "left"
+            self.player.walking = True
+
+        elif keys[pygame.K_RIGHT]:
+            dx += 1
+            self.player.direction = "right"
+            self.player.walking = True
+
+        direction = pygame.math.Vector2(dx, dy)
+
+        if direction.length() > 0:
+            direction = direction.normalize()
+
+        self.player.save_location()
+
+        self.player.position[0] += direction.x * self.player.speed
+        self.player.position[1] += direction.y * self.player.speed
+
+        self.player.animate()
 
     def get_colliding_item(self, list):
         for item in list:
@@ -169,7 +213,7 @@ class MusicLevel:
     def update(self, events): 
         self.player.save_location()
 
-        self.game.handle_input()
+        self.handle_input()
 
         for inst in self.instruments:
             if hasattr(inst, 'shake_timer') and inst.shake_timer > 0:
@@ -214,6 +258,10 @@ class MusicLevel:
             if event.type == self.MUSIC_FINISHED_EVENT:
                 # This event is triggered when the music finishes playing
                 self.game.display_entering_message(["Time's up! You failed to find the instrument in time.", "Try again later!"])
+                
+                self.game.music.load("music/pottery level music.aif")
+                self.game.music.play(-1)
+                self.game.music.set_volume(0.5)
                 self.game.map = "world"  # Send player back to world map
 
         if self.inventory.open:
@@ -221,4 +269,7 @@ class MusicLevel:
 
         if self.instruments_collected == len(self.instrument_sequence):
             self.game.display_entering_message(["Congratulations! You found all the instruments.", "You are a true musician!"])
+            self.game.music.load("music/pottery level music.aif")
+            self.game.music.play(-1)
+            self.game.music.set_volume(0.5)
             self.game.map = "world"  # Send player back to world map

@@ -6,17 +6,14 @@
  <tileset firstgid="937" name="FloorsAndWalls 32px" tilewidth="16" tileheight="16" tilecount="648" columns="36">
   <image source="tilsets/home tileset/Top-Down_Retro_Interior/TopDownHouse_FloorsAndWalls 32px.png" width="576" height="288"/>
  </tileset>
- <tileset firstgid="1585" name="SmallItems" tilewidth="16" tileheight="16" tilecount="256" columns="16">
-  <image source="tilsets/home tileset/Top-Down_Retro_Interior/TopDownHouse_SmallItems 32px.png" width="256" height="256"/>
- </tileset>
- <tileset firstgid="1841" name="padestal 0" tilewidth="33" tileheight="52" tilecount="1" columns="1">
-  <image source="images/padestal 0.png" width="33" height="52"/>
- </tileset>
- <tileset firstgid="1842" name="barnous new colors" tilewidth="32" tileheight="32" tilecount="1" columns="1">
-  <image source="images/barnous new colors.png" width="32" height="32"/>
- </tileset>
- <tileset firstgid="1843" name="white ground" tilewidth="19" tileheight="19" tilecount="25" columns="5">
+ <tileset firstgid="1585" name="white ground" tilewidth="19" tileheight="19" tilecount="25" columns="5">
   <image source="../../Users/HP/Downloads/white ground.png" width="96" height="96"/>
+ </tileset>
+ <tileset firstgid="1610" name="white textured ground" tilewidth="16" tileheight="16" tilecount="36" columns="6">
+  <image source="../../Users/HP/Downloads/white textured ground.png" width="96" height="96"/>
+ </tileset>
+ <tileset firstgid="1646" name="wall" tilewidth="16" tileheight="16" tilecount="18" columns="6">
+  <image source="../../Users/HP/Downloads/wall.png" width="96" height="50"/>
  </tileset>
  <layer id="2" name="floor" width="75" height="40" opacity="0.9">
   <data encoding="csv">

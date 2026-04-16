@@ -199,6 +199,7 @@ class PaintingLevel:
             self.player.canMove = True
 
         elif clicked_button_index == 0: # They clicked "This is it"
+            
             actual_name = self.get_colliding_painting_name()
             target_name = self.masterpieces[self.current_target_index]
 
@@ -208,6 +209,7 @@ class PaintingLevel:
                 self.paintings_found += 1
                 self.current_target_index += 1
                 self.painting_clue.current_dialogue_idx += 1 # Move to the next clue for the next painting
+                self.painting_clue.reset_text() # Reset text animation for the clue
                 print("Correct!")
             else:
                 # WRONG: Error animation (Red)
@@ -369,10 +371,18 @@ class PaintingLevel:
 
         if self.paintings_found == 5:
             self.ending_the_level(["Congratulations! You've found all the masterpieces!", "Press c to return to world map..."])
+            self.music.stop()
+            self.game.music.load("music/pottery level music.aif")
+            self.game.music.play(-1)
+            self.game.music.set_volume(0.5)
             self.game.map = "world" # Return to world map after ending
             self.game.painting_level_completed = True
 
         if self.lives <= 0:
+            self.music.stop()
+            self.game.music.load("music/pottery level music.aif")
+            self.game.music.play(-1)
+            self.game.music.set_volume(0.5)
             self.ending_the_level(["You've lost all your lives!", "Game Over.", ";)", ":)", "                  :)"])
             self.game.map = "world" # Return to world map after ending
 
