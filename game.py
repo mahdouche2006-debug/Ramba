@@ -211,12 +211,15 @@ class Game:
         # --- DOOR COLLISIONS (Cleaned up using the helper) ---
         
         if self.check_collision_with_door(self.doors[0]):
+            self.music.stop()
             self.try_enter_level("level1", Level1, self.level1_completed, ["Welcome!", "stuck!"], 40)
 
         if self.check_collision_with_door(self.doors[1]):
+            self.music.stop()
             self.try_enter_level("paintingLevel", PaintingLevel, self.painting_level_completed, ["Art Gallery!", "Look Closely, and find all 5 paintings!"])
 
         if self.check_collision_with_door(self.doors[2]):
+            self.music.stop()
             self.try_enter_level("musicLevel", MusicLevel, self.music_level_completed, ["Music Hall!", "Listen closely."])
 
         # --- TUNNEL COLLISIONS ---

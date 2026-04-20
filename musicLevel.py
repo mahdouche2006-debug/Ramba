@@ -30,6 +30,10 @@ class MusicLevel:
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=0)
         self.group.add(self.player) 
 
+        self.music = pygame.mixer.music
+        self.MUSIC_FINISHED_EVENT = pygame.USEREVENT + 1
+        pygame.mixer.music.set_endevent(self.MUSIC_FINISHED_EVENT)  # Custom event for music end
+
         # Load the image
         original_e = pygame.image.load("images/e.png").convert_alpha()
 
@@ -71,23 +75,51 @@ class MusicLevel:
 
         self.inventory = Inventory()
 
+        self.instruments_collected = 0
+        
     def handle_input(self):
         keys = pygame.key.get_pressed()
-        dx, dy = 0, 0
-        if not self.player.canMove: return
+
+        dx = 0
+        dy = 0
+        
+        if not self.player.canMove:
+            return
+
         self.player.walking = False
 
-        if keys[pygame.K_UP]: dy -= 1; self.player.direction = "up"; self.player.walking = True
-        elif keys[pygame.K_DOWN]: dy += 1; self.player.direction = "down"; self.player.walking = True
-        if keys[pygame.K_LEFT]: dx -= 1; self.player.direction = "left"; self.player.walking = True
-        elif keys[pygame.K_RIGHT]: dx += 1; self.player.direction = "right"; self.player.walking = True
+        # movement
+        if keys[pygame.K_UP]:
+            dy -= 1
+            self.player.direction = "up"
+            self.player.walking = True
+
+        elif keys[pygame.K_DOWN]:
+            dy += 1
+            self.player.direction = "down"
+            self.player.walking = True
+
+        if keys[pygame.K_LEFT]:
+            dx -= 1
+            self.player.direction = "left"
+            self.player.walking = True
+
+        elif keys[pygame.K_RIGHT]:
+            dx += 1
+            self.player.direction = "right"
+            self.player.walking = True
 
         direction = pygame.math.Vector2(dx, dy)
+
         if direction.length() > 0:
             direction = direction.normalize()
-            self.player.position[0] += direction.x * self.player.speed
-            self.player.position[1] += direction.y * self.player.speed
-            self.player.animate()
+
+        self.player.save_location()
+
+        self.player.position[0] += direction.x * self.player.speed
+        self.player.position[1] += direction.y * self.player.speed
+
+        self.player.animate()
 
     def get_colliding_item(self, list):
         for item in list:
@@ -166,14 +198,17 @@ class MusicLevel:
             if item == self.current_target:
                 # SUCCESS
                 self.add_instrument_to_inventory(item)
+                pygame.mixer.music.set_endevent()
+                self.music.stop()
+                pygame.event.clear(self.MUSIC_FINISHED_EVENT) # Remove any "pending" fail signals
+                pygame.mixer.music.set_endevent(self.MUSIC_FINISHED_EVENT)  # Re-enable for next round
                 self.current_target = None 
                 self.current_index += 1
-                print("Correct! Go back to the podium for the next one.")
+                self.instruments_collected += 1
             else:
                 # WRONG INSTRUMENT - Localized Shake
                 item.shake_timer = 20 # Number of frames to shake
                 self.womp_sound.play()
-                print("Wrong instrument! Womp Womp.")
 
     def update(self, events): 
         self.player.save_location()
@@ -211,21 +246,30 @@ class MusicLevel:
             self.player.move_back()
 
         for event in events:
-            if event.type == pygame.QUIT:
-                pygame.quit()
             
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
-                    pygame.quit()
 
                 if event.key == pygame.K_i:
                     self.inventory.open = not self.inventory.open
 
                 if event.key == pygame.K_e and not self.inventory.open:
-                    
                     self.handle_interaction()
+            
+            if event.type == self.MUSIC_FINISHED_EVENT:
+                # This event is triggered when the music finishes playing
+                self.game.display_entering_message(["Time's up! You failed to find the instrument in time.", "Try again later!"])
+                
+                self.game.music.load("music/pottery level music.aif")
+                self.game.music.play(-1)
+                self.game.music.set_volume(0.5)
+                self.game.map = "world"  # Send player back to world map
 
         if self.inventory.open:
             self.inventory.draw(self.screen)
 
-        
+        if self.instruments_collected == len(self.instrument_sequence):
+            self.game.display_entering_message(["Congratulations! You found all the instruments.", "You are a true musician!"])
+            self.game.music.load("music/pottery level music.aif")
+            self.game.music.play(-1)
+            self.game.music.set_volume(0.5)
+            self.game.map = "world"  # Send player back to world map

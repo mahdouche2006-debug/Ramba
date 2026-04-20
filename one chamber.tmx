@@ -18,6 +18,12 @@
  <tileset firstgid="1843" name="white ground" tilewidth="19" tileheight="19" tilecount="25" columns="5">
   <image source="tilsets/white ground.png" width="96" height="96"/>
  </tileset>
+ <tileset firstgid="1610" name="white textured ground" tilewidth="16" tileheight="16" tilecount="36" columns="6">
+  <image source="../../Users/HP/Downloads/white textured ground.png" width="96" height="96"/>
+ </tileset>
+ <tileset firstgid="1646" name="wall" tilewidth="16" tileheight="16" tilecount="18" columns="6">
+  <image source="../../Users/HP/Downloads/wall.png" width="96" height="50"/>
+ </tileset>
  <layer id="2" name="floor" width="75" height="40" opacity="0.9">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

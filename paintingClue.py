@@ -8,6 +8,9 @@ class PaintingClue:
         
         self.screen_w, self.screen_h = self.screen.get_size()
         self.box_height = int(self.screen_h * 0.22)
+
+        self.sound = pygame.mixer.Sound("music/typingOneChar.mp3")
+        self.sound.set_volume(0.2)
         
         # Sizing font for fullscreen
         font_size = int(self.screen_w * 0.02) 
@@ -28,7 +31,7 @@ class PaintingClue:
             self.dialogue_box_img.fill((50, 50, 50))
 
         self.text_index = 0
-        self.text_speed = 3  
+        self.text_speed = 5 # frames per character
         self.frame_count = 0
         self.is_finished = False
         
@@ -76,6 +79,7 @@ class PaintingClue:
         current_full_text = self.dialogues[self.current_dialogue_idx]
         if self.frame_count % self.text_speed == 0:
             if self.text_index < len(current_full_text):
+                self.sound.play()
                 self.text_index += 1
 
         self.draw()
