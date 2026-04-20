@@ -6,7 +6,6 @@ import math
 from board import Board
 from dialogue import Dialogue
 from inventory import Inventory
-from player import Player
 from paintingUI import PaintingUI
 from paintingClue import PaintingClue
 
@@ -20,15 +19,14 @@ class PaintingLevel:
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
 
-        # generer un joueur
-        player_position = tmx_data.get_object_by_name("player")
-        self.player = Player(player_position.x, player_position.y)
+        # reuse the player from the game instance
+        self.player = game_instance.player
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=2)
         self.group.add(self.player)
 
-        self.music = pygame.mixer_music
+        self.music = pygame.mixer.music
         self.music.load("music/Gallery theme.mp3")
         self.music.play(-1)
         self.music.set_volume(0.5)
@@ -55,6 +53,7 @@ class PaintingLevel:
 
         self.walls = []
         self.paintings = {}
+        self.board = None
 
         for obj in tmx_data.objects:
 
@@ -120,8 +119,8 @@ class PaintingLevel:
         self.painting_clue.dialogues.append("Congratulations! You've found all the masterpieces!")
 
         # font
-        self.font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 70)
-        self.hud_font = pygame.font.SysFont("fonts/Pixel Emulator.otf", 40)
+        self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 70)
+        self.hud_font = pygame.font.Font("fonts/Pixel Emulator.otf", 40)
 
         # change the soud of the footsteps
         self.player.walk_sounds = [
@@ -227,7 +226,7 @@ class PaintingLevel:
                 near_painting = True
                 break # Stop looking once we find one
 
-        near_board = self.player.feet.colliderect(self.board.rect)
+        near_board = self.board and self.player.feet.colliderect(self.board.rect)
 
         # 3. Display Logic
         if near_board or near_painting:
@@ -276,6 +275,8 @@ class PaintingLevel:
             pygame.display.flip()
 
     def open_board(self):
+        if not self.board:
+            return
         self.board.open_sound.play()
         self.board.open = not self.board.open
         # If the board is now open, player cannot move. If closed, they can.
@@ -288,7 +289,7 @@ class PaintingLevel:
     
     def create_painting_ui(self, p_name):
         # Only open if board is NOT open
-        if not self.board.open:
+        if not self.board or not self.board.open:
             try:
                 # Constructing path dynamically as you did:
                 img_path = "images/" + p_name + ".png"
@@ -313,7 +314,8 @@ class PaintingLevel:
         self.draw_stats() # Draw stats on top of the world but below the UI
 
         # 2. Draw World Objects (Middle Layer)
-        self.board.draw(self.screen)
+        if self.board:
+            self.board.draw(self.screen)
         self.drawing_e()
 
         self.painting_clue.update()
@@ -348,7 +350,7 @@ class PaintingLevel:
                         self.player.canMove = True
                         
                     # --- CASE 2: Board Interaction ---
-                    elif self.player.feet.colliderect(self.board.rect):
+                    elif self.board and self.player.feet.colliderect(self.board.rect):
                         self.open_board()
 
                     # --- CASE 3: Painting Interaction ---
