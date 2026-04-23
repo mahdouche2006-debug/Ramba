@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="26" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="87">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="26" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="88">
  <tileset firstgid="1" name="paintinglvl" tilewidth="32" tileheight="32" tilecount="1014" columns="39">
   <image source="paintinglvl.png" width="1257" height="832"/>
  </tileset>
@@ -118,6 +118,9 @@
   <object id="84" type="obj" x="298" y="655.333" width="23.3333" height="5.33333"/>
   <object id="85" type="obj" x="200.667" y="655.333"/>
   <object id="86" type="obj" x="200" y="653.333" width="21.3333" height="11.3333"/>
+  <object id="87" name="player" x="674" y="758">
+   <point/>
+  </object>
  </objectgroup>
  <layer id="3" name="onTop" width="40" height="26">
   <data encoding="csv">
