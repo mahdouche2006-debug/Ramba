@@ -8,6 +8,7 @@ from dialogue import Dialogue
 from inventory import Inventory
 from paintingUI import PaintingUI
 from paintingClue import PaintingClue
+from player import PlayerShadow
 
 class PaintingLevel:
     def __init__(self, screen, game_instance):
@@ -27,9 +28,9 @@ class PaintingLevel:
         self.group.add(self.player)
 
         self.music = pygame.mixer.music
-        self.music.load("music/Gallery theme.mp3")
-        self.music.play(-1)
-        self.music.set_volume(0.5)
+        self.music.load("music/ClairLune.mp3")
+        self.music.set_volume(0.3)
+        self.music.play(-1, fade_ms=3000)
 
         # Load the image
         original_e = pygame.image.load("images/e.png").convert_alpha()
@@ -69,6 +70,11 @@ class PaintingLevel:
                 self.board = Board(obj.x, obj.y, obj.width, obj.height)
 
         self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
+
+        # Shadow — drawn on layer 3, just below the player (layer 4)
+        self.player_shadow = PlayerShadow(self.player)
+        self.group.add(self.player_shadow)
+        self.group.change_layer(self.player_shadow, 3)
 
         # counter for items collected
         self.paintings_collected = 0
@@ -120,7 +126,7 @@ class PaintingLevel:
 
         # font
         self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 70)
-        self.hud_font = pygame.font.Font("fonts/Pixel Emulator.otf", 40)
+        self.hud_font = pygame.font.Font("fonts/Pixel Emulator.otf", 36)
 
         # change the soud of the footsteps
         self.player.walk_sounds = [
@@ -198,7 +204,6 @@ class PaintingLevel:
             self.player.canMove = True
 
         elif clicked_button_index == 0: # They clicked "This is it"
-            
             actual_name = self.get_colliding_painting_name()
             target_name = self.masterpieces[self.current_target_index]
 
@@ -208,7 +213,6 @@ class PaintingLevel:
                 self.paintings_found += 1
                 self.current_target_index += 1
                 self.painting_clue.current_dialogue_idx += 1 # Move to the next clue for the next painting
-                self.painting_clue.reset_text() # Reset text animation for the clue
                 print("Correct!")
             else:
                 # WRONG: Error animation (Red)
@@ -239,23 +243,36 @@ class PaintingLevel:
         else:
             self.e_sprite.rect.topleft = (-500, -500)
     
+    def _draw_hud_box(self, text, color, x, y):
+        """Draw a semi-transparent HUD box (same style as the timer)."""
+        pad   = 8
+        label = self.hud_font.render(text, False, color)
+        box_w = label.get_width()  + pad * 2
+        box_h = label.get_height() + pad * 2
+        bg    = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 120))
+        self.screen.blit(bg,    (x, y))
+        self.screen.blit(label, (x + pad, y + pad))
+
     def draw_stats(self):
-        # 1. Prepare the strings
-        # We use 5 as the max since you mentioned 5 target paintings
-        lives_text = f"LIVES: {self.lives}"
-        progress_text = f"FOUND: {self.paintings_found}/5"
+        margin = 12
 
-        # 2. Render the text surfaces
-        lives_surf = self.hud_font.render(lives_text, True, (220, 20, 60)) # Crimson Red for lives
-        progress_surf = self.hud_font.render(progress_text, True, (255, 215, 0)) # Gold for progress
+        # top-left: lives (red)
+        self._draw_hud_box(
+            f"Lives  {self.lives}",
+            (220, 60, 60),
+            margin, margin
+        )
 
-        # 3. Blit to the screen corners
-        # Padding of 20 pixels from the edges
-        self.screen.blit(lives_surf, (20, 20))
-        
-        # Position progress on the top right
-        progress_x = self.screen.get_width() - progress_surf.get_width() - 20
-        self.screen.blit(progress_surf, (progress_x, 20))
+        # top-right: found counter (gold)
+        found_label = self.hud_font.render(f"Found  {self.paintings_found}/5", False, (255, 215, 0))
+        pad   = 8
+        box_w = found_label.get_width() + pad * 2
+        self._draw_hud_box(
+            f"Found  {self.paintings_found}/5",
+            (255, 215, 0),
+            self.screen.get_width() - box_w - margin, margin
+        )
     
     def ending_the_level(self, message):
         dialogue = Dialogue(message)
@@ -281,7 +298,6 @@ class PaintingLevel:
             return
         self.board.open_sound.play()
         self.board.open = not self.board.open
-        # If the board is now open, player cannot move. If closed, they can.
         self.player.canMove = not self.board.open
 
     def open_inventory(self):
@@ -373,18 +389,10 @@ class PaintingLevel:
 
         if self.paintings_found == 5:
             self.ending_the_level(["Congratulations! You've found all the masterpieces!", "Press c to return to world map..."])
-            self.music.stop()
-            self.game.music.load("music/pottery level music.aif")
-            self.game.music.play(-1)
-            self.game.music.set_volume(0.5)
             self.game.map = "world" # Return to world map after ending
             self.game.painting_level_completed = True
 
         if self.lives <= 0:
-            self.music.stop()
-            self.game.music.load("music/pottery level music.aif")
-            self.game.music.play(-1)
-            self.game.music.set_volume(0.5)
             self.ending_the_level(["You've lost all your lives!", "Game Over.", ";)", ":)", "                  :)"])
             self.game.map = "world" # Return to world map after ending
 

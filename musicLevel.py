@@ -6,7 +6,7 @@ import pytmx
 import pyscroll
 
 from item import Item
-from player import Player
+from player import PlayerShadow
 from inventory import Inventory
 
 class MusicLevel:
@@ -16,19 +16,24 @@ class MusicLevel:
         
         self.game.music.stop()
 
-        tmx_data = pytmx.util_pygame.load_pygame("tilsets/rayenTileset/best-version-so-far.tmx")
+        tmx_data = pytmx.util_pygame.load_pygame("map_v2.tmx")
         map_data = pyscroll.data.TiledMapData(tmx_data) 
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 2
 
         
-        # generer un joueur
-        player_position = tmx_data.get_object_by_name("player")
-        self.player = Player(player_position.x, player_position.y)
+        # reuse the player from the game instance
+        self.player = game_instance.player
 
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=0)
-        self.group.add(self.player) 
+        self.group.add(self.player)
+        self.group.change_layer(self.player, 1)   # raise player so shadow renders below
+
+        # Shadow — layer 0, below the player (layer 1)
+        self.player_shadow = PlayerShadow(self.player)
+        self.group.add(self.player_shadow)
+        self.group.change_layer(self.player_shadow, 0)
 
         self.music = pygame.mixer.music
         self.MUSIC_FINISHED_EVENT = pygame.USEREVENT + 1
@@ -49,27 +54,28 @@ class MusicLevel:
         self.e_sprite.rect.topleft = (-100, -100)
         self.group.add(self.e_sprite)
 
-        self.walls = []
+        self.walls       = []
         self.instruments = []
+        self.podium      = None   # set below if the map defines a Podium object
 
         self.instrument_sequence = ["Guitar", "Maracas", "Flute", "Banjo"]
         self.current_index = 0
 
         self.current_target = None  # The instrument the player needs to find
         self.shake_amount = 0       # For the shake animation
-        self.womp_sound = pygame.mixer.Sound("music/womp-womp.mp3") # Add your fail sound path
+        self.womp_sound = pygame.mixer.Sound("music/womp-womp.mp3")
 
         for obj in tmx_data.objects:
 
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-            
+
             if obj.type == "instrument":
                 instrument = Item(f"instruments/{obj.name}", obj.x, obj.y)
-                instrument.name = obj.name # Store the name for later comparison
+                instrument.name = obj.name
                 self.instruments.append(instrument)
                 self.group.add(instrument)
-            
+
             if obj.name == "Podium":
                 self.podium = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
 
@@ -147,7 +153,7 @@ class MusicLevel:
         bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
 
         near_instrument = self.get_colliding_item(self.instruments)
-        near_podium = self.player.feet.colliderect(self.podium)
+        near_podium = self.podium and self.player.feet.colliderect(self.podium)
         if near_instrument or near_podium:
             # Position the E sprite relative to the player's WORLD coordinates
             # Pyscroll will automatically scale this by 3x and offset it for the camera
@@ -186,7 +192,7 @@ class MusicLevel:
     def handle_interaction(self):
         """Logic for pressing E"""
         # 1. Check Podium Interaction
-        if self.player.feet.colliderect(self.podium):
+        if self.podium and self.player.feet.colliderect(self.podium):
             # Only play next challenge if we don't have one active
             if not self.current_target:
                 self.play_next_challenge()

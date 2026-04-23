@@ -12,7 +12,7 @@ from timer import CountdownTimer
 class Game:
     def __init__(self):
         # cree la fenetre du jeu
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN)
         pygame.display.set_caption("RAMBA")
 
         # charger la carte (tmx)
@@ -21,10 +21,12 @@ class Game:
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
 
-        self.music = pygame.mixer_music
-        self.music.load("music/pottery level music.aif")
-        self.music.play(-1)
-        self.music.set_volume(0.5)
+        # Keep self.music as a convenience alias used by sub-levels
+        self.music = pygame.mixer.music
+
+        # ── World-map background music ────────────────────────────────────
+        self._world_music_active = False   # managed by helpers below
+        self._music_start_world()          # fade in on first load
 
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
@@ -73,6 +75,30 @@ class Game:
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
         self.group.add(self.player)
 
+    # ------------------------------------------------------------------ #
+    #  Music helpers
+    # ------------------------------------------------------------------ #
+    def _music_start_world(self):
+        """Load the world-map track and fade it in over 3 s."""
+        if self._world_music_active:
+            return
+        pygame.mixer.music.load("music/main map music.aif")
+        pygame.mixer.music.set_volume(0.15)
+        pygame.mixer.music.play(-1, fade_ms=3000)
+        self._world_music_active = True
+
+    def _music_stop_world(self):
+        """Fade the world music out over 1 s (non-blocking).
+
+        The 1 s fadeout is intentionally matched to the 1 s screen-blackout
+        in fade_in_to_black() so both finish at the same time.
+        """
+        if not self._world_music_active:
+            return
+        pygame.mixer.music.fadeout(1000)
+        self._world_music_active = False
+
+    # ------------------------------------------------------------------ #
     def handle_input(self):
         keys = pygame.key.get_pressed()
 
@@ -145,13 +171,17 @@ class Game:
         return self.player.feet.collidelist(obj) > -1
 
     def fade_in_to_black(self):
+        # Start audio fade-out BEFORE the visual one so both finish together
+        # (200 steps × 5 ms = 1 000 ms — same duration as fadeout below)
+        self._music_stop_world()
+
         fade = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
         fade.fill((0, 0, 0))
         for alpha in range(0, 200):
             fade.set_alpha(alpha)
             self.screen.blit(fade, (0, 0))
             pygame.display.update()
-            pygame.time.delay(5) 
+            pygame.time.delay(5)
 
     def display_entering_message(self, message):
         self.fade_in_to_black()
@@ -245,8 +275,12 @@ class Game:
             pygame.mouse.set_visible(False)
             
             if self.map == "world":
+                # Fade world music back in whenever we return from a level
+                # (or after a tunnel transition faded it out)
+                if not self._world_music_active:
+                    self._music_start_world()
                 self.update_world()
-                
+
             else:
                 if self.current_level:
                     self.current_level.update(events)
