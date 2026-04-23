@@ -25,10 +25,10 @@ class Level1:
         map_layer.bgcolor = (30, 20, 15)   # dark fill so map edges don't flash black
 
         # generer un joueur
-        player_position = tmx_data.get_object_by_name("player")
-        if player_position:
+        try:
+            player_position = tmx_data.get_object_by_name("player")
             self.player = Player(player_position.x, player_position.y)
-        else:
+        except KeyError:
             self.player = Player(200, 200)  # fallback spawn if no player object in map
 
         # dessiner le groupe de calque
