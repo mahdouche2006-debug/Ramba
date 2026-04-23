@@ -18,7 +18,7 @@ class Level1:
         self.screen = screen
         self.game = game_instance
         # charger la carte (tmx)
-        tmx_data = pytmx.util_pygame.load_pygame('one chamber.tmx')
+        tmx_data = pytmx.util_pygame.load_pygame('potteryLevel.tmx')
         map_data = pyscroll.data.TiledMapData(tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
@@ -51,14 +51,14 @@ class Level1:
         
         # lists
         self.walls = []
-
         self.sculptures = []
+        self.board = None
 
         for obj in tmx_data.objects:
 
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-            
+
             elif obj.type == "sculpture":
                 sculpture = Item(obj.name, obj.x, obj.y, False)
                 self.sculptures.append(sculpture)
@@ -266,7 +266,7 @@ class Level1:
         bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
 
         near_sculpture = self.get_colliding_item(self.sculptures)
-        near_board = self.player.feet.colliderect(self.board.rect)
+        near_board = self.board and self.player.feet.colliderect(self.board.rect)
         if near_board or near_sculpture:
             # Position the E sprite relative to the player's WORLD coordinates
             # Pyscroll will automatically scale this by 3x and offset it for the camera
@@ -307,7 +307,8 @@ class Level1:
 
         self.inventory.draw(self.screen)
 
-        self.board.draw(self.screen)
+        if self.board:
+            self.board.draw(self.screen)
 
         if self.is_viewing_enigma:
             # 1. Draw the UI and check if it has finished its "Wrong" animation
@@ -357,7 +358,7 @@ class Level1:
                                 self.player.canMove = False 
                             # -----------------------
 
-                    if self.player.feet.colliderect(self.board.rect):
+                    if self.board and self.player.feet.colliderect(self.board.rect):
                         self.open_board()
 
             if event.type == pygame.MOUSEBUTTONDOWN:

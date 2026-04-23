@@ -9,9 +9,7 @@
  <tileset firstgid="55" name="padestalfinal" tilewidth="16" tileheight="16" tilecount="2" columns="1">
   <image source="tilsets/suka's work/pottery level/padestalfinal.png" width="16" height="32"/>
  </tileset>
- <tileset firstgid="57" name="pixil-frame-0(2)" tilewidth="16" tileheight="16" tilecount="8" columns="2">
-  <image source="../../Users/HP/Downloads/pixil-frame-0(2).png" width="32" height="64"/>
- </tileset>
+
  <tileset firstgid="65" name="padestalfinal" tilewidth="16" tileheight="16" tilecount="8" columns="2">
   <image source="tilsets/suka's work/pottery level/padestalfinal.png" width="32" height="64"/>
  </tileset>
