@@ -19,7 +19,7 @@ class MusicLevel:
         tmx_data = pytmx.util_pygame.load_pygame("musicLevel.tmx")
         map_data = pyscroll.data.TiledMapData(tmx_data) 
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
-        map_layer.zoom = 3.3
+        map_layer.zoom = 3
         map_layer.bgcolor = (36, 34, 39)   # match musicMap.png background colour
 
         
