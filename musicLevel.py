@@ -16,24 +16,29 @@ class MusicLevel:
         
         self.game.music.stop()
 
-        tmx_data = pytmx.util_pygame.load_pygame("map_v2.tmx")
+        tmx_data = pytmx.util_pygame.load_pygame("musicLevel.tmx")
         map_data = pyscroll.data.TiledMapData(tmx_data) 
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
-        map_layer.zoom = 2
+        map_layer.zoom = 2.5
 
         
         # reuse the player from the game instance
         self.player = game_instance.player
 
         # dessiner le groupe de calque
+        # Tile layer indices: 0 = ground, 1 = onTop
+        # Sprites at layer N draw after tile layer N, so player must be at 0
+        # to render between ground and onTop.
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=0)
-        self.group.add(self.player)
-        self.group.change_layer(self.player, 1)   # raise player so shadow renders below
 
-        # Shadow — layer 0, below the player (layer 1)
+        # Shadow added first at layer 0 → draws before player (beneath feet)
         self.player_shadow = PlayerShadow(self.player)
         self.group.add(self.player_shadow)
         self.group.change_layer(self.player_shadow, 0)
+
+        # Player at layer 0 → draws after ground, before onTop tile layer
+        self.group.add(self.player)
+        self.group.change_layer(self.player, 0)
 
         self.music = pygame.mixer.music
         self.MUSIC_FINISHED_EVENT = pygame.USEREVENT + 1
@@ -57,6 +62,7 @@ class MusicLevel:
         self.walls       = []
         self.instruments = []
         self.podium      = None   # set below if the map defines a Podium object
+        spawn_points     = []     # collects all "player" named objects
 
         self.instrument_sequence = ["Guitar", "Maracas", "Flute", "Banjo"]
         self.current_index = 0
@@ -78,6 +84,16 @@ class MusicLevel:
 
             if obj.name == "Podium":
                 self.podium = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
+
+            if obj.name == "player":
+                spawn_points.append((obj.x, obj.y))
+
+        # Teleport player to a random spawn point defined in the map
+        if spawn_points:
+            spawn = random.choice(spawn_points)
+            self.player.position[0] = spawn[0]
+            self.player.position[1] = spawn[1]
+            self.player.rect.topleft = self.player.position
 
         self.inventory = Inventory()
 

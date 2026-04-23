@@ -12,7 +12,7 @@ from timer import CountdownTimer
 class Game:
     def __init__(self):
         # cree la fenetre du jeu
-        self.screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN | pygame.SCALED)
         pygame.display.set_caption("RAMBA")
 
         # charger la carte (tmx)

@@ -24,7 +24,7 @@ class PaintingLevel:
         self.player = game_instance.player
 
         # dessiner le groupe de calque
-        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=2)
+        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=1)
         self.group.add(self.player)
 
         self.music = pygame.mixer.music
@@ -69,12 +69,14 @@ class PaintingLevel:
             if obj.name == "board":
                 self.board = Board(obj.x, obj.y, obj.width, obj.height)
 
-        self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
+        # "onTop" is tile layer index 2 — player must be at layer 1 to render beneath it
+        self.group.change_layer(self.player, 1)
+        self.group.change_layer(self.e_sprite, 1)
 
-        # Shadow — drawn on layer 3, just below the player (layer 4)
+        # Shadow below the player (layer 0)
         self.player_shadow = PlayerShadow(self.player)
         self.group.add(self.player_shadow)
-        self.group.change_layer(self.player_shadow, 3)
+        self.group.change_layer(self.player_shadow, 0)
 
         # counter for items collected
         self.paintings_collected = 0
