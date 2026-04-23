@@ -18,7 +18,7 @@ class Level1:
         self.screen = screen
         self.game = game_instance
         # charger la carte (tmx)
-        tmx_data = pytmx.util_pygame.load_pygame('potteryLevel.tmx')
+        tmx_data = pytmx.util_pygame.load_pygame('newPotteryLvl.tmx')
         map_data = pyscroll.data.TiledMapData(tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
@@ -26,11 +26,15 @@ class Level1:
 
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
-        self.player = Player(player_position.x, player_position.y)
-        
+        if player_position:
+            self.player = Player(player_position.x, player_position.y)
+        else:
+            self.player = Player(200, 200)  # fallback spawn if no player object in map
+
         # dessiner le groupe de calque
-        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
-        self.group.add(self.player) 
+        # onTop is tile layer index 1 — player must be at pyscroll layer 0 to render beneath it
+        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=0)
+        self.group.add(self.player)
 
         # Load the image
         original_e = pygame.image.load("images/e.png").convert_alpha()
@@ -48,7 +52,7 @@ class Level1:
 
         # Add it to the group so it moves with the camera
         self.group.add(self.e_sprite)
-        
+
         # lists
         self.walls = []
         self.sculptures = []
@@ -67,14 +71,14 @@ class Level1:
             if obj.name == "board":
                 self.board = Board(obj.x, obj.y, obj.width, obj.height)
 
-        
-        self.group.change_layer(self.player, 4)  # Assure que le joueur est au-dessus des items et des murs
+        # onTop layer is tile index 1 — player/shadow must be at layer 0
+        self.group.change_layer(self.player, 0)
+        self.group.change_layer(self.e_sprite, 0)
 
-        # Shadow sprite — must be added AFTER the player layer is set so
-        # pyscroll draws it below the player (layer 3 < player layer 4)
+        # Shadow below the player (same layer 0, inserted before player so it draws first)
         self.player_shadow = PlayerShadow(self.player)
         self.group.add(self.player_shadow)
-        self.group.change_layer(self.player_shadow, 3)
+        self.group.change_layer(self.player_shadow, 0)
 
         # counter for items collected
         self.items_collected = 0
