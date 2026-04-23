@@ -71,7 +71,7 @@ class Dialogue:
         self.hint_font = pygame.font.Font(self.FONT_PATH, self.HINT_FONT_SIZE)
 
         self.dialogues      = message
-        self.sound          = pygame.mixer.Sound("music/Click.wav")
+        self.sound          = pygame.mixer.Sound("music/typingOneChar.mp3")
         self.sound.set_volume(0.5)
 
         self.dialogue_index = 0

@@ -83,7 +83,7 @@ class Game:
         if self._world_music_active:
             return
         pygame.mixer.music.load("music/main map music.aif")
-        pygame.mixer.music.set_volume(0.15)
+        pygame.mixer.music.set_volume(0.25)
         pygame.mixer.music.play(-1, fade_ms=3000)
         self._world_music_active = True
 
