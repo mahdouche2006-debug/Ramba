@@ -185,7 +185,7 @@ class Dialogue:
     def handle_event(self, event):
         if not self.active:
             return
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             current = self.dialogues[self.dialogue_index]
             if self.current_length < len(current):
                 self.current_length = len(current)   # skip typing
@@ -214,23 +214,10 @@ class Dialogue:
         if done and not self._blink_on:
             return
 
-        label = self.hint_font.render("[ C ]  continue", False, self.C_INK)
-        pad   = 10
-        bw    = label.get_width()  + pad * 2
-        bh    = label.get_height() + pad * 2
-        bx    = screen.get_width()  // 2 - bw // 2
-        by    = screen.get_height() - bh - 28
-
-        pygame.draw.rect(screen, self.C_PARCH_DARK, (bx, by, bw, bh))
-        # gold border
-        pygame.draw.rect(screen, self.C_GOLD,       (bx,      by,      bw-2, 2   ))
-        pygame.draw.rect(screen, self.C_GOLD,       (bx,      by,      2,    bh-2))
-        pygame.draw.rect(screen, self.C_DARK_BROWN, (bx+2,    by+bh-2, bw-2, 2   ))
-        pygame.draw.rect(screen, self.C_DARK_BROWN, (bx+bw-2, by+2,    2,    bh-2))
-        # red accent top
-        pygame.draw.rect(screen, self.C_RED, (bx+2, by+2, bw-4, 1))
-
-        screen.blit(label, (bx + pad, by + pad))
+        label = self.hint_font.render("[ SPACE ]  continue", False, self.C_INK)
+        lx    = screen.get_width()  // 2 - label.get_width()  // 2
+        ly    = screen.get_height() - label.get_height() - 28
+        screen.blit(label, (lx, ly))
 
     # ------------------------------------------------------------------ #
     def draw(self, screen):
@@ -244,33 +231,21 @@ class Dialogue:
             self._bg = self._build_bg(screen)
         screen.blit(self._bg, (0, 0))
 
-        # ── text box ──────────────────────────────────────────────────
+        # ── text (no box) ─────────────────────────────────────────────
         current = self.dialogues[self.dialogue_index]
         text    = current[:self.current_length]
         done    = self.current_length >= len(current)
 
         text_surf = self.font.render(text, False, self.C_INK)
         tw, th    = text_surf.get_size()
-        pad       = 28
-
-        bw = min(tw + pad * 2, sw - 200)
-        bh = th + pad * 2
-        bx = sw // 2 - bw // 2
-        by = sh // 2 - bh // 2
-
-        # parchment text box background
-        pygame.draw.rect(screen, self.C_PARCH_DARK, (bx, by, bw, bh))
-
-        # 3-layer border on text box
-        pygame.draw.rect(screen, self.C_DARK_BROWN, (bx,   by,   bw,   bh  ), 3)
-        pygame.draw.rect(screen, self.C_GOLD,        (bx+3, by+3, bw-6, bh-6), 2)
-        pygame.draw.rect(screen, self.C_RED,         (bx+5, by+5, bw-10,bh-10), 1)
+        tx        = sw // 2 - tw // 2
+        ty        = sh // 2 - th // 2
 
         # blinking cursor while still typing
         if not done and (pygame.time.get_ticks() // 350) % 2 == 0:
-            pygame.draw.rect(screen, self.C_INK, (bx + pad + tw + 3, by + pad, 3, th))
+            pygame.draw.rect(screen, self.C_INK, (tx + tw + 3, ty, 3, th))
 
-        screen.blit(text_surf, (bx + pad, by + pad))
+        screen.blit(text_surf, (tx, ty))
 
         # ── hint ──────────────────────────────────────────────────────
         self._draw_hint(screen, done)

@@ -22,6 +22,7 @@ class Level1:
         map_data = pyscroll.data.TiledMapData(tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
+        map_layer.bgcolor = (30, 20, 15)   # dark fill so map edges don't flash black
 
         # generer un joueur
         player_position = tmx_data.get_object_by_name("player")
@@ -209,8 +210,8 @@ class Level1:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         pygame.quit()
-                    if event.key == pygame.K_c:
-                        self.screen.fill((0, 0, 0)) 
+                    if event.key == pygame.K_SPACE:
+                        self.screen.fill((0, 0, 0))
 
                 dialogue.handle_event(event)
             dialogue.update()

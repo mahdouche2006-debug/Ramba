@@ -19,6 +19,7 @@ class PaintingLevel:
         map_data = pyscroll.data.TiledMapData(tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
         map_layer.zoom = 3
+        map_layer.bgcolor = (30, 20, 15)   # dark fill so map edges don't flash black
 
         # reuse the player from the game instance
         self.player = game_instance.player
@@ -287,8 +288,8 @@ class PaintingLevel:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         pygame.quit()
-                    if event.key == pygame.K_c:
-                        self.screen.fill((0, 0, 0)) 
+                    if event.key == pygame.K_SPACE:
+                        self.screen.fill((0, 0, 0))
 
                 dialogue.handle_event(event)
             dialogue.update()
