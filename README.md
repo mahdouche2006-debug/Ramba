@@ -1,5 +1,5 @@
 # Ramba--ISS-project-
-A fun cozy game that reflects my pasion for arts!
+A fun cozy game that reflects my passion for arts!
 
 ideas:
-Taksir objects to find the thing the player needs
+Search for objects to find the things the player needs
