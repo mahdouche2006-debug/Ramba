@@ -174,8 +174,8 @@ class Level1:
             self.player.walking = True
 
             if self.check_collision_with_list(self.side_stairs):
-                dy += stairs_deviation
-                dx += stairs_deviation
+                dy -= stairs_deviation
+                dx -= stairs_deviation
 
         elif keys[pygame.K_RIGHT]:
             dx += 1
@@ -183,8 +183,8 @@ class Level1:
             self.player.walking = True
 
             if self.check_collision_with_list(self.side_stairs):
-                dy -= stairs_deviation
-                dx -= stairs_deviation
+                dy += stairs_deviation
+                dx += stairs_deviation
 
         direction = pygame.math.Vector2(dx, dy)
 
