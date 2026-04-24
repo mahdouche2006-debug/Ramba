@@ -1,4 +1,4 @@
-# Ramba--ISS-project-
+# Ramba--ISS--project
 A fun cozy game that reflects my passion for arts!
 
 ideas:
