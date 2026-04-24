@@ -56,6 +56,7 @@ class Level1:
         # lists
         self.walls = []
         self.sculptures = []
+        self.side_stairs = []
         self.board = None
 
         for obj in tmx_data.objects:
@@ -67,6 +68,9 @@ class Level1:
                 sculpture = Item(obj.name, obj.x, obj.y, False)
                 self.sculptures.append(sculpture)
                 self.group.add(sculpture)
+
+            elif obj.type == "side_stairs":
+                self.side_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
             if obj.name == "board":
                 self.board = Board(obj.x, obj.y, obj.width, obj.height)
@@ -146,7 +150,8 @@ class Level1:
 
         dx = 0
         dy = 0
-        
+        stairs_deviation = 0.33
+
         if not self.player.canMove:
             return
 
@@ -168,10 +173,18 @@ class Level1:
             self.player.direction = "left"
             self.player.walking = True
 
+            if self.check_collision_with_list(self.side_stairs):
+                dy += stairs_deviation
+                dx += stairs_deviation
+
         elif keys[pygame.K_RIGHT]:
             dx += 1
             self.player.direction = "right"
             self.player.walking = True
+
+            if self.check_collision_with_list(self.side_stairs):
+                dy -= stairs_deviation
+                dx -= stairs_deviation
 
         direction = pygame.math.Vector2(dx, dy)
 
