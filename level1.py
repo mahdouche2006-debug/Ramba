@@ -116,32 +116,32 @@ class Level1:
             "TheThinker": {
                 "options": ["Auguste Rodin", "Michelangelo", "Banksy"],
                 "correct": 0,
-                "image": pygame.transform.scale(pygame.image.load("images/TheThinker.png").convert_alpha(), (400, 300))
+                "image": pygame.transform.scale(pygame.image.load("images/sculptures/TheThinker.png").convert_alpha(), (400, 300))
             },
             "David": {
                 "options": ["Donatello", "Bernini", "Michelangelo"],
                 "correct": 2,
-                "image": pygame.transform.scale(pygame.image.load("images/David.png").convert_alpha(), (400, 300))
+                "image": pygame.transform.scale(pygame.image.load("images/sculptures/David.png").convert_alpha(), (400, 300))
             },
             "Pieta": {
                 "options": ["Michelangelo", "R. Smithson", "A. Savage"],
                 "correct": 0,
-                "image": pygame.transform.scale(pygame.image.load("images/Pieta.png").convert_alpha(), (400, 300))
+                "image": pygame.transform.scale(pygame.image.load("images/sculptures/Pieta.png").convert_alpha(), (400, 300))
             },
             "ChristTheRedeemer": {
                 "options": ["Lee Bontecou", "P. Landowski", "Ruth Asawa"],
                 "correct": 1,
-                "image": pygame.transform.scale(pygame.image.load("images/ChristTheRedeemer.png").convert_alpha(), (400, 300))
+                "image": pygame.transform.scale(pygame.image.load("images/sculptures/ChristTheRedeemer.png").convert_alpha(), (400, 300))
             },
             "Medusa": {
                 "options": ["Bernini", "D. Judd", "Eva Hesse"],
                 "correct": 0,
-                "image": pygame.transform.scale(pygame.image.load("images/Medusa.png").convert_alpha(), (400, 300))
+                "image": pygame.transform.scale(pygame.image.load("images/sculptures/Medusa.png").convert_alpha(), (400, 300))
             },
             "VenusDeMilo": {
                 "options": ["Sol LeWitt", "Alexandros", "T. Eakins"],
                 "correct": 1,
-                "image": pygame.transform.scale(pygame.image.load("images/VenusDeMilo.png").convert_alpha(), (400, 300))
+                "image": pygame.transform.scale(pygame.image.load("images/sculptures/VenusDeMilo.png").convert_alpha(), (400, 300))
             },
         }
 
