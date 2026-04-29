@@ -8,8 +8,13 @@ class PaintingUI:
         self.rect = self.template.get_rect(center=(pygame.display.get_surface().get_width()//2, 
                                                    pygame.display.get_surface().get_height()//2))
         
-        self.painting_img = painting_image
-        self.painting_img = pygame.transform.scale(self.painting_img, (600, 350)) # Scale to fit nicely in the UI
+        # Scale to fit within 600×350 while preserving the original aspect ratio
+        MAX_W, MAX_H = 600, 350
+        orig_w, orig_h = painting_image.get_size()
+        scale = min(MAX_W / orig_w, MAX_H / orig_h)
+        self.painting_img = pygame.transform.smoothscale(
+            painting_image, (int(orig_w * scale), int(orig_h * scale))
+        )
         self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 25)
         
         # 2. Buttons: 0 = "This is it", 1 = "Go Back"
