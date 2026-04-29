@@ -84,44 +84,156 @@ class PaintingLevel:
         self.is_viewing_painting = False
         self.current_painting_rect = None # Tracks which painting the player is looking at
 
-        # The 5 paintings the player MUST find
-        self.masterpieces = ["Monalisa", "TheScream", "StarryNight", "Guernica", "LasMeninas"]
         self.current_target_index = 0
         self.paintings_found = 0
         self.lives = 3
 
         # The "Clue" logic
-        self.current_target_name = "Monalisa" # This would be set by the 'board' interaction
         self.clue_active = False
 
-        # Dictionary of painting details
+        # ── All paintings: image_path + art-historical clue ─────────────────
+        # Keys must match the object names used in paintingLevel.tmx.
+        # image_path points to images/paintings/<Filename>.<ext>
         self.paintings_data = {
-            "Monalisa": {
-                "clue": "Find the lady with the mysterious smile.",
-                "image": pygame.image.load("images/Monalisa.png")
+            "MonaLisa": {
+                "clue": "Find the lady with the mysterious smile, painted by the master of the Renaissance.",
+                "image_path": "images/paintings/MonaLisa.jpg",
             },
             "TheScream": {
-                "clue": "Seek the figure expressing existential fear.",
-                "image": pygame.image.load("images/TheScream.png")
+                "clue": "Seek the figure clutching its face against a swirling blood-red sky.",
+                "image_path": "images/paintings/TheScream.jpg",
             },
-            "StarryNight": {
-                "clue": "Look for the swirling night sky over a quiet town.",
-                "image": pygame.image.load("images/StarryNight.png")
+            "TheStarryNight": {
+                "clue": "Look for the swirling night sky blazing over a sleeping village and church spire.",
+                "image_path": "images/paintings/TheStarryNight.jpg",
             },
+            "GirlWithAPearlEarring": {
+                "clue": "Seek the girl gazing over her shoulder, wearing a single luminous pearl.",
+                "image_path": "images/paintings/GirlWithAPearlEarring.jpg",
+            },
+            "TheSchoolOfAthens": {
+                "clue": "Find Raphael's grand fresco of ancient Greek philosophers gathered beneath sweeping arches.",
+                "image_path": "images/paintings/TheSchoolOfAthens.jpg",
+            },
+            "TheLambAmongWolves": {
+                "clue": "Look for the innocent lamb surrounded by predators in this allegorical scene.",
+                "image_path": "images/paintings/TheLambAmongWolves.jpg",
+            },
+            "LesSaltimbanques": {
+                "clue": "Find Picasso's melancholy group of circus performers drifting through an empty landscape.",
+                "image_path": "images/paintings/LesSaltimbanques.jpg",
+            },
+            "Ophelia": {
+                "clue": "Seek the tragic Shakespearean figure floating serenely among flowers on a river's surface.",
+                "image_path": "images/paintings/Ophelia.jpg",
+            },
+            "TheFallenAngel": {
+                "clue": "Look for the expelled angel, wings spread wide, falling from heavenly grace.",
+                "image_path": "images/paintings/TheFallenAngel.jpg",
+            },
+            "SelfPortraitWithDeathPlayingTheFiddle": {
+                "clue": "Find the artist face-to-face with Death, who plays a fiddle over his shoulder.",
+                "image_path": "images/paintings/SelfPortraitWithDeathPlayingTheFiddle.jpg",
+            },
+            "Anguish": {
+                "clue": "Seek the raw expression of unbearable grief captured in dark, tortured strokes.",
+                "image_path": "images/paintings/Anguish.jpg",
+            },
+            "TheHesitantFiance": {
+                "clue": "Find the reluctant suitor caught between desire and doubt on his wedding day.",
+                "image_path": "images/paintings/TheHesitantFiance.jpg",
+            },
+            "TheDefender": {
+                "clue": "Look for the lone figure standing guard, shielding something precious.",
+                "image_path": "images/paintings/TheDefender.jpg",
+            },
+            "TheBlueboy": {
+                "clue": "Seek the elegantly dressed young man in shimmering blue satin.",
+                "image_path": "images/paintings/TheBlueboy.jpg",
+            },
+            "AFriendInNeed": {
+                "clue": "Find the dogs gathered around a card table — one secretly dealing from beneath.",
+                "image_path": "images/paintings/AFriendInNeed.webp",
+            },
+            "TheLastSupper": {
+                "clue": "Look for Christ and his twelve apostles at the long table on the eve of his betrayal.",
+                "image_path": "images/paintings/TheLastSupper.webp",
+            },
+            "SaturnDevouringHisSon": {
+                "clue": "Find the terrifying god consuming his own child in a fit of fear and madness.",
+                "image_path": "images/paintings/SaturnDevouringHisSon.jpg",
+            },
+            "IvanTheTerribileAndHisSon": {
+                "clue": "Seek the tsar cradling his dying son, horror and regret written across his face.",
+                "image_path": "images/paintings/IvanTheTerribileAndHisSon.jpg",
+            },
+            "NapoleonCrossingTheAlps": {
+                "clue": "Find the general atop a rearing horse, commanding the mountain pass.",
+                "image_path": "images/paintings/NapoleonCrossingTheAlps.jpg",
+            },
+            "Stanczyk": {
+                "clue": "Look for the court jester sitting alone in grim thought while festivities rage behind him.",
+                "image_path": "images/paintings/Stanczyk.jpg",
+            },
+            "LOrphelin": {
+                "clue": "Seek the solitary orphan child, wandering and grieving in a desolate setting.",
+                "image_path": "images/paintings/LOrphelin.jpg",
+            },
+            "LibertyLeadingThePeople": {
+                "clue": "Find the allegorical figure of Liberty holding the tricolour flag amid revolutionary chaos.",
+                "image_path": "images/paintings/LibertyLeadingThePeople.jpg",
+            },
+            "TheCreationOfAdam": {
+                "clue": "Seek the divine spark — God reaching toward Adam's outstretched finger on the Sistine ceiling.",
+                "image_path": "images/paintings/TheCreationOfAdam.jpg",
+            },
+            "TheBirthOfVenus": {
+                "clue": "Find the goddess rising from the sea on a shell, carried by the breath of the wind.",
+                "image_path": "images/paintings/TheBirthOfVenus.jpg",
+            },
+            "TheKiss": {
+                "clue": "Look for the golden couple locked in an embrace, wrapped in a jewelled tapestry.",
+                "image_path": "images/paintings/TheKiss.jpg",
+            },
+            "TheSwing": {
+                "clue": "Find the lady on the swing, her shoe flying off into the lush garden air.",
+                "image_path": "images/paintings/TheSwing.jpg",
+            },
+            "TheGreatWaveOffKanagawa": {
+                "clue": "Seek the towering wave about to crash, with Mount Fuji small and calm in the distance.",
+                "image_path": "images/paintings/TheGreatWaveOffKanagawa.jpg",
+            },
+            "SelfPortraitVanGogh": {
+                "clue": "Find the artist's own face, painted with swirling brushstrokes and piercing eyes.",
+                "image_path": "images/paintings/SelfPortraitVanGogh.jpg",
+            },
+            "ThePersistenceOfMemory": {
+                "clue": "Look for the melting clocks draped like cloth over a barren dreamscape.",
+                "image_path": "images/paintings/ThePersistenceOfMemory.jpg",
+            },
+            "WaterLilies": {
+                "clue": "Find Monet's tranquil pond, its shimmering surface alive with soft dabs of colour.",
+                "image_path": "images/paintings/WaterLilies.jpg",
+            },
+            # Legacy entries kept for TMX backwards compatibility
             "Guernica": {
-                "clue": "Identify the chaotic scene depicting the tragedies of war.",
-                "image": pygame.image.load("images/Guernica.png")
+                "clue": "Identify the chaotic monochrome scene depicting the horrors of war.",
+                "image_path": "images/Guernica.png",
             },
             "LasMeninas": {
-                "clue": "Find the painting showing the Infanta Margarita with her attendants.",
-                "image": pygame.image.load("images/LasMeninas.png")
-            }
+                "clue": "Find the painting showing the Infanta Margarita with her attendants and Velázquez himself.",
+                "image_path": "images/LasMeninas.png",
+            },
         }
-        
-        self.painting_clue_dialogues = []
+        # ────────────────────────────────────────────────────────────────────
 
-        for painting in self.paintings_data:
-            self.painting_clue_dialogues.append(self.paintings_data[painting]["clue"])
+        # Paintings the player MUST find (all entries in order above)
+        self.masterpieces = list(self.paintings_data.keys())
+
+        # Build clue list in masterpieces order (index matches current_target_index)
+        self.painting_clue_dialogues = [
+            self.paintings_data[name]["clue"] for name in self.masterpieces
+        ]
 
         # painting clue creation
         self.painting_clue = PaintingClue(self.screen, self.game, self.painting_clue_dialogues)
@@ -268,11 +380,12 @@ class PaintingLevel:
         )
 
         # top-right: found counter (gold)
-        found_label = self.hud_font.render(f"Found  {self.paintings_found}/5", False, (255, 215, 0))
+        total = len(self.masterpieces)
+        found_label = self.hud_font.render(f"Found  {self.paintings_found}/{total}", False, (255, 215, 0))
         pad   = 8
         box_w = found_label.get_width() + pad * 2
         self._draw_hud_box(
-            f"Found  {self.paintings_found}/5",
+            f"Found  {self.paintings_found}/{total}",
             (255, 215, 0),
             self.screen.get_width() - box_w - margin, margin
         )
@@ -311,17 +424,18 @@ class PaintingLevel:
     def create_painting_ui(self, p_name):
         # Only open if board is NOT open
         if not self.board or not self.board.open:
+            if p_name not in self.paintings_data:
+                print(f"No data for painting: {p_name}")
+                return
+            img_path = self.paintings_data[p_name]["image_path"]
             try:
-                # Constructing path dynamically as you did:
-                img_path = "images/" + p_name + ".png"
-                self.current_ui = PaintingUI(pygame.image.load(img_path).convert_alpha())
-                
+                # Use convert() — safe for jpg/webp/png (no alpha channel required)
+                self.current_ui = PaintingUI(pygame.image.load(img_path).convert())
                 self.is_viewing_painting = True
                 self.player.canMove = False
                 self.current_painting_name = p_name
-
-            except pygame.error:
-                print(f"Error: Could not find {p_name}.png")
+            except (pygame.error, FileNotFoundError) as e:
+                print(f"Error loading painting '{p_name}': {e}")
             
     def update(self, events):
         self.player.save_location()
@@ -390,7 +504,7 @@ class PaintingLevel:
                 # This checks if they clicked the "This is it" button
                 self.check_painting_choice(event.pos)
 
-        if self.paintings_found == 5:
+        if self.paintings_found == len(self.masterpieces):
             self.ending_the_level(["Congratulations! You've found all the masterpieces!", "Press c to return to world map..."])
             self.game.map = "world" # Return to world map after ending
             self.game.painting_level_completed = True
