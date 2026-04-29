@@ -53,9 +53,9 @@ class PaintingClue:
         self.game     = game_instance
 
         self.screen_w, self.screen_h = self.screen.get_size()
-        self.box_height = int(self.screen_h * 0.12)
+        self.box_height = int(self.screen_h * 0.16)   # slightly taller for multi-line clues
 
-        font_size = int(self.screen_w * 0.02)
+        font_size = int(self.screen_w * 0.016)         # a touch smaller so long lines wrap less
         try:
             self.font = pygame.font.Font("fonts/Pixel Emulator.otf", font_size)
         except:
@@ -170,9 +170,21 @@ class PaintingClue:
         displayed_text    = current_full_text[:self.text_index]
         visible_lines     = self.wrap_text(displayed_text)
 
-        line_spacing = int(self.font.get_height() * 1.2)
+        line_h       = self.font.get_height()
+        line_spacing = int(line_h * 1.3)
+
+        # Inner text area: subtract all three border layers on top and bottom
+        inner_margin = self.BORDER_OUTER + self.BORDER_GOLD + self.BORDER_CREAM + 6
+        inner_top    = box_y + inner_margin
+        inner_bottom = box_y + self.box_height - inner_margin
+        inner_height = inner_bottom - inner_top
+
+        # Total pixel height of the text block
+        block_height = line_h + (len(visible_lines) - 1) * line_spacing
+
+        # Start y so the block is vertically centred in the inner area
         x = self.screen_w * 0.07
-        y = box_y + (self.box_height * 0.22)
+        y = inner_top + max(0, (inner_height - block_height) // 2)
 
         for line in visible_lines:
             text_surface = self.font.render(line, True, self.C_TEXT)
