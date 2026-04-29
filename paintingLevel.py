@@ -227,8 +227,8 @@ class PaintingLevel:
         }
         # ────────────────────────────────────────────────────────────────────
 
-        # Paintings the player MUST find (all entries in order above)
-        self.masterpieces = list(self.paintings_data.keys())
+        # Paintings the player MUST find (first 5 from the dictionary)
+        self.masterpieces = list(self.paintings_data.keys())[:5]
 
         # Build clue list in masterpieces order (index matches current_target_index)
         self.painting_clue_dialogues = [
