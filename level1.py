@@ -398,6 +398,18 @@ class Level1:
                 if event.key == pygame.K_i:
                     self.open_inventory()
 
+                # ── Enigma keyboard navigation ────────────────────────────
+                if self.is_viewing_enigma and self.current_ui.clicked_index is None:
+                    if event.key == pygame.K_LEFT:
+                        self.current_ui.selected_index = (self.current_ui.selected_index - 1) % 3
+                    elif event.key == pygame.K_RIGHT:
+                        self.current_ui.selected_index = (self.current_ui.selected_index + 1) % 3
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        # Confirm: treat selected button centre as a mouse click
+                        btn = self.current_ui.button_rects[self.current_ui.selected_index]
+                        self.check_enigma_answer(btn.center)
+                # ─────────────────────────────────────────────────────────
+
                 if event.key == pygame.K_e and not self.inventory.open:
                     if self.is_viewing_enigma:
                         self.is_viewing_enigma = False

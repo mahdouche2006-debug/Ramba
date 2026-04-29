@@ -36,9 +36,12 @@ class EnigmaUI:
         self.is_correct = False # Tracks if we should show Green or Red
 
         # Initialize 3 colors (one for each button) starting at your default dark brown
-        self.current_colors = [[60, 40, 30] for _ in range(3)] 
+        self.current_colors = [[60, 40, 30] for _ in range(3)]
         self.target_gold = [218, 165, 32]
         self.default_brown = [60, 40, 30]
+
+        # Keyboard navigation — which button is currently focused
+        self.selected_index = 0
 
     def trigger_shake_anim(self, index, correct = False):
         self.clicked_index = index
@@ -69,35 +72,37 @@ class EnigmaUI:
 
         for i, name in enumerate(self.options):
             color = (60, 40, 30) # A dark brown usually looks better than pure black on that parchment
-            
+
             if i == self.clicked_index:
                 color = (0, 180, 0) if self.is_correct else (200, 0, 0)
 
             else:
-                # Determine which color we WANT to be (Target)
-                target = self.target_gold if self.button_rects[i].collidepoint(mouse_pos) and self.clicked_index is None else self.default_brown
-                
+                # Gold-highlight if mouse is hovering OR this is the keyboard-selected button
+                is_highlighted = (
+                    self.clicked_index is None and
+                    (self.button_rects[i].collidepoint(mouse_pos) or i == self.selected_index)
+                )
+                target = self.target_gold if is_highlighted else self.default_brown
+
                 # Transition each RGB channel slowly (Lerp)
-                # 0.1 is the speed. Lower = slower transition
                 for j in range(3):
                     diff = target[j] - self.current_colors[i][j]
                     self.current_colors[i][j] += diff * 0.15
-                
+
                 color = tuple(self.current_colors[i])
 
             text_surf = self.font.render(name, True, color)
-            
-            # Apply shake_offset only to the X of the wrong button
+
+            # Apply shake_offset only to the clicked button
             current_rect = self.button_rects[i].copy()
             if i == self.clicked_index:
                 current_rect.x += self.shake_offset
-                
-            """ this code is for satrting the names from the left edge of the button, you can adjust the padding_x value to move it more left or right
-            padding_x = 10
-            text_rect = text_surf.get_rect(midleft=(current_rect.left + padding_x, current_rect.centery))"""
 
             text_rect = text_surf.get_rect(center=current_rect.center)
+            screen.blit(text_surf, text_rect)
 
-            screen.blit(text_surf, text_rect) # Center text in the button
+            # Draw a gold outline around the keyboard-selected button
+            if i == self.selected_index and self.clicked_index is None:
+                pygame.draw.rect(screen, (255, 215, 0), current_rect.inflate(6, 6), width=3, border_radius=6)
 
         return is_done_shaking
