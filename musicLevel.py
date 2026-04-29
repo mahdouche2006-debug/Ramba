@@ -63,6 +63,7 @@ class MusicLevel:
         self.walls       = []
         self.instruments = []
         self.podium      = None   # set below if the map defines a Podium object
+        self.guitar_zone = None   # interactive guitar object layer
         spawn_points     = []     # collects all "player" named objects
 
         self.instrument_sequence = ["Guitar", "Maracas", "Flute", "Banjo"]
@@ -85,6 +86,9 @@ class MusicLevel:
 
             if obj.name == "Podium":
                 self.podium = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
+
+            if obj.name.lower() == "guitar":
+                self.guitar_zone = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
 
             if obj.name == "player":
                 spawn_points.append((obj.x, obj.y))
@@ -170,8 +174,9 @@ class MusicLevel:
         bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
 
         near_instrument = self.get_colliding_item(self.instruments)
-        near_podium = self.podium and self.player.feet.colliderect(self.podium)
-        if near_instrument or near_podium:
+        near_podium     = self.podium      and self.player.feet.colliderect(self.podium)
+        near_guitar     = self.guitar_zone and self.player.feet.colliderect(self.guitar_zone)
+        if near_instrument or near_podium or near_guitar:
             # Position the E sprite relative to the player's WORLD coordinates
             # Pyscroll will automatically scale this by 3x and offset it for the camera
             self.e_sprite.rect.midbottom = (
