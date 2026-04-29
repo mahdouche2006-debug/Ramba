@@ -456,6 +456,9 @@ class PaintingLevel:
         self.painting_clue.update()
 
         # 3. Draw the UI (Top Layer)
+        # Inventory drawn before painting UI so painting UI sits on top if both open
+        self.inventory.draw(self.screen)
+
         # We draw this LAST so it covers the player and the map
         if self.is_viewing_painting:
             pygame.mouse.set_visible(True)
