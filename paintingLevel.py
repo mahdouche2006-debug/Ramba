@@ -10,6 +10,13 @@ from paintingUI import PaintingUI
 from paintingClue import PaintingClue
 from player import PlayerShadow
 
+
+class _FoundPainting:
+    """Lightweight inventory entry for a correctly identified painting."""
+    def __init__(self, name, image):
+        self.name          = name
+        self.display_image = image  # used by Inventory.draw via getattr
+
 class PaintingLevel:
     def __init__(self, screen, game_instance):
         self.screen = screen
@@ -328,6 +335,14 @@ class PaintingLevel:
                 self.paintings_found += 1
                 self.current_target_index += 1
                 self.painting_clue.current_dialogue_idx += 1 # Move to the next clue for the next painting
+
+                # Add the found painting to the inventory
+                img_path = self.paintings_data[actual_name]["image_path"]
+                try:
+                    img = pygame.image.load(img_path).convert()
+                except Exception:
+                    img = pygame.Surface((1, 1))
+                self.inventory.add_item(_FoundPainting(actual_name, img))
                 print("Correct!")
             else:
                 # WRONG: Error animation (Red)
