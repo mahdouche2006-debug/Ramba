@@ -64,8 +64,8 @@ class Inventory:
             cx = panel_x + self._slot_cx[col]
             cy = panel_y + self._slot_cy[row]
 
-            # Use display_image if available (sculptures hide their sprite image on the map)
-            src = getattr(slot, 'display_image', slot.image)
+            # Use display_image if available (sculptures/paintings), else sprite image
+            src = slot.display_image if hasattr(slot, 'display_image') else slot.image
             thumb = pygame.transform.smoothscale(src, (self._item_size, self._item_size))
             screen.blit(thumb, (cx - half, cy - half))
 
