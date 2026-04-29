@@ -309,6 +309,10 @@ class Level1:
         Because we blit straight onto `self.screen` *after* group.draw(), the badge
         always appears on top of every tile layer including the onTop layer.
         """
+        # Never show the badge while a menu/UI is covering the screen
+        if self.is_viewing_enigma or self.inventory.open:
+            return
+
         near_sculpture = self.get_colliding_item(self.sculptures)
         near_board     = self.board and self.player.feet.colliderect(self.board.rect)
         if not (near_board or near_sculpture):
