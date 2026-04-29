@@ -87,7 +87,7 @@ class MusicLevel:
             if obj.name == "Podium":
                 self.podium = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
 
-            if obj.name.lower() == "guitar":
+            if obj.name and obj.name.lower() == "guitar":
                 self.guitar_zone = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
 
             if obj.name == "player":
