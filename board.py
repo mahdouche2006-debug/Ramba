@@ -6,7 +6,7 @@ class Board(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, width, height) 
         
         # 2. The 'UI' Image (The big board that pops up)
-        self.ui_image = pygame.image.load("images/board.png")
+        self.ui_image = pygame.image.load("images/board1.png")
         self.ui_rect = self.ui_image.get_rect(center=(pygame.display.get_surface().get_width()//2, 
                                                       pygame.display.get_surface().get_height()//2))
         

@@ -53,7 +53,8 @@ class Level1:
             elif obj.type == "sculpture":
                 sculpture = Item(f"sculptures/{obj.name}", obj.x, obj.y, False)
                 sculpture.name = obj.name  # restore real name for enigma lookup
-                # Hide the sprite image; collision rect stays intact for interaction
+                # Keep original image for inventory display, then blank the sprite
+                sculpture.display_image = sculpture.image.copy()
                 sculpture.image = pygame.Surface(sculpture.rect.size, pygame.SRCALPHA)
                 self.sculptures.append(sculpture)
                 self.group.add(sculpture)
