@@ -36,22 +36,7 @@ class Level1:
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=0)
         self.group.add(self.player)
 
-        # Load the image
-        original_e = pygame.image.load("images/e.png").convert_alpha()
-
-        # Scale it to 32x32 pixels
-        self.e_image = pygame.transform.scale(original_e, (16, 16))
-
-        # Create the E prompt as a Sprite
-        self.e_sprite = pygame.sprite.Sprite()
-        self.e_sprite.image = self.e_image
-        self.e_sprite.rect = self.e_image.get_rect()
-
-        # Start it off-screen so it's hidden
-        self.e_sprite.rect.topleft = (-100, -100)
-
-        # Add it to the group so it moves with the camera
-        self.group.add(self.e_sprite)
+        # E badge is drawn directly to screen in drawing_e() — built after font
 
         # lists
         self.walls = []
@@ -66,7 +51,10 @@ class Level1:
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
             elif obj.type == "sculpture":
-                sculpture = Item(obj.name, obj.x, obj.y, False)
+                sculpture = Item(f"sculptures/{obj.name}", obj.x, obj.y, False)
+                sculpture.name = obj.name  # restore real name for enigma lookup
+                # Hide the sprite image; collision rect stays intact for interaction
+                sculpture.image = pygame.Surface(sculpture.rect.size, pygame.SRCALPHA)
                 self.sculptures.append(sculpture)
                 self.group.add(sculpture)
 
@@ -82,7 +70,6 @@ class Level1:
 
         # onTop layer is tile index 1 — player/shadow must be at layer 0
         self.group.change_layer(self.player, 0)
-        self.group.change_layer(self.e_sprite, 0)
 
         # Shadow below the player (same layer 0, inserted before player so it draws first)
         self.player_shadow = PlayerShadow(self.player)
@@ -97,6 +84,35 @@ class Level1:
 
         # font
         self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 36)
+
+        # ── E badge (drawn directly to screen, above all tile layers) ──────
+        _badge_font  = pygame.font.Font("fonts/Pixel Emulator.otf", 18)
+        _key_surf    = _badge_font.render("E", True, (255, 255, 255))
+        _hint_surf   = _badge_font.render("  interact", True, (190, 190, 210))
+        _pad         = 7
+        _key_sz      = _key_surf.get_height() + _pad * 2       # square key box
+        _badge_w     = _key_sz + _hint_surf.get_width() + _pad * 3
+        _badge_h     = _key_sz + _pad * 2
+        self.e_badge = pygame.Surface((_badge_w, _badge_h), pygame.SRCALPHA)
+        # pill background
+        pygame.draw.rect(self.e_badge, (10, 10, 20, 170),
+                         (0, 0, _badge_w, _badge_h), border_radius=10)
+        pygame.draw.rect(self.e_badge, (100, 100, 160, 220),
+                         (0, 0, _badge_w, _badge_h), width=2, border_radius=10)
+        # key box
+        _kx = _pad;  _ky = _pad
+        pygame.draw.rect(self.e_badge, (50, 50, 80, 230),
+                         (_kx, _ky, _key_sz, _key_sz), border_radius=5)
+        pygame.draw.rect(self.e_badge, (160, 160, 220, 255),
+                         (_kx, _ky, _key_sz, _key_sz), width=2, border_radius=5)
+        self.e_badge.blit(_key_surf,
+                          (_kx + (_key_sz - _key_surf.get_width())  // 2,
+                           _ky + (_key_sz - _key_surf.get_height()) // 2))
+        # hint text
+        self.e_badge.blit(_hint_surf,
+                          (_kx + _key_sz,
+                           _ky + (_key_sz - _hint_surf.get_height()) // 2))
+        # ───────────────────────────────────────────────────────────────────
 
         # inventory creation
         self.inventory = Inventory()
@@ -288,23 +304,32 @@ class Level1:
         self.player.canMove = not self.player.canMove
 
     def drawing_e(self):
-        # 1. Get a shifting offset based on time
-        # pygame.time.get_ticks() gives us the time in milliseconds
-        # We divide by 200 to control the speed of the bobbing
-        bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
+        """Draw the interaction badge directly on the screen above the player's head.
 
+        Because we blit straight onto `self.screen` *after* group.draw(), the badge
+        always appears on top of every tile layer including the onTop layer.
+        """
         near_sculpture = self.get_colliding_item(self.sculptures)
-        near_board = self.board and self.player.feet.colliderect(self.board.rect)
-        if near_board or near_sculpture:
-            # Position the E sprite relative to the player's WORLD coordinates
-            # Pyscroll will automatically scale this by 3x and offset it for the camera
-            self.e_sprite.rect.midbottom = (
-                self.player.rect.centerx + bobbing_offset, 
-                self.player.rect.top - 10
-            )
-        else:
-            # Hide it when not near anything
-            self.e_sprite.rect.topleft = (-500, -500)
+        near_board     = self.board and self.player.feet.colliderect(self.board.rect)
+        if not (near_board or near_sculpture):
+            return
+
+        zoom   = 3
+        sw, sh = self.screen.get_size()
+        bob    = math.sin(pygame.time.get_ticks() / 200) * 5
+
+        # Player is always rendered at screen center by pyscroll.
+        # World-to-screen: screen_pt = screen_center + (world_pt - cam_center) * zoom
+        # cam_center == player.rect.center, so player maps exactly to screen center.
+        # We want the badge just above the player's head.
+        badge_screen_x = sw // 2
+        badge_screen_y = (sh // 2
+                          + (self.player.rect.top - self.player.rect.centery) * zoom
+                          - 12 + bob)
+
+        badge = self.e_badge
+        self.screen.blit(badge, (badge_screen_x - badge.get_width() // 2,
+                                 badge_screen_y - badge.get_height()))
 
     def open_inventory(self):
         self.inventory.open_sound.play()
