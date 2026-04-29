@@ -45,20 +45,78 @@ class MusicLevel:
         self.MUSIC_FINISHED_EVENT = pygame.USEREVENT + 1
         pygame.mixer.music.set_endevent(self.MUSIC_FINISHED_EVENT)  # Custom event for music end
 
-        # Load the image
-        original_e = pygame.image.load("images/e.png").convert_alpha()
+        # ── Music-themed pixel-art E badge (drawn directly to screen) ──────
+        # Colours
+        _BG      = (  8,   5,  20, 200)   # deep navy background
+        _TEAL    = (  0, 210, 180, 255)   # bright teal — outer border + note
+        _PURPLE  = (150,  60, 230, 255)   # bright purple — inner border + key border
+        _KEY_BG  = ( 20,  10,  45, 250)   # dark purple key fill
+        _TEXT    = (190, 255, 242, 255)   # near-white teal text
 
-        # Scale it to 32x32 pixels
-        self.e_image = pygame.transform.scale(original_e, (16, 16))
+        _font      = pygame.font.Font("fonts/Pixel Emulator.otf", 18)
+        _key_surf  = _font.render("E",        True, _TEXT)
+        _hint_surf = _font.render("interact", True, _TEXT)
 
-        # Create the E prompt as a Sprite
-        self.e_sprite = pygame.sprite.Sprite()
-        self.e_sprite.image = self.e_image
-        self.e_sprite.rect = self.e_image.get_rect()
+        _pad    = 7
+        _key_sz = _key_surf.get_height() + _pad * 2   # square key box side
 
-        # Start it off-screen so it's hidden
-        self.e_sprite.rect.topleft = (-100, -100)
-        self.group.add(self.e_sprite)
+        # Hand-drawn pixel music note (10 × 11 px bitmap, 2 px per cell)
+        _NOTE_BITMAP = [
+            "...###",
+            "....##",
+            ".....#",
+            ".....#",
+            ".....#",
+            ".....#",
+            "..####",
+            "..####",
+            ".....#",
+            ".####.",
+            ".####.",
+        ]
+        _CELL = 2                                 # pixels per bitmap cell
+        _note_w = len(_NOTE_BITMAP[0]) * _CELL
+        _note_h = len(_NOTE_BITMAP)    * _CELL
+
+        _badge_w = _pad + _note_w + _pad + _key_sz + _hint_surf.get_width() + _pad * 2
+        _badge_h = _key_sz + _pad * 2
+
+        self.e_badge = pygame.Surface((_badge_w, _badge_h), pygame.SRCALPHA)
+
+        # Background (sharp pixel-art corners)
+        pygame.draw.rect(self.e_badge, _BG,     (0, 0, _badge_w, _badge_h))
+        # Outer teal border (2 px)
+        pygame.draw.rect(self.e_badge, _TEAL,   (0, 0, _badge_w, _badge_h), 2)
+        # Inner purple border (1 px, inset by 3)
+        pygame.draw.rect(self.e_badge, _PURPLE, (3, 3, _badge_w - 6, _badge_h - 6), 1)
+
+        # Pixel music note — centred vertically on the left side
+        _nx = _pad
+        _ny = (_badge_h - _note_h) // 2
+        for _row_i, _row in enumerate(_NOTE_BITMAP):
+            for _col_i, _px in enumerate(_row):
+                if _px == "#":
+                    pygame.draw.rect(self.e_badge, _TEAL,
+                                     (_nx + _col_i * _CELL,
+                                      _ny + _row_i * _CELL,
+                                      _CELL, _CELL))
+
+        # Key box
+        _kx = _pad + _note_w + _pad
+        _ky = _pad
+        pygame.draw.rect(self.e_badge, _KEY_BG, (_kx, _ky, _key_sz, _key_sz))
+        pygame.draw.rect(self.e_badge, _PURPLE, (_kx, _ky, _key_sz, _key_sz), 2)
+        # Tiny highlight pixel (top-left of key)
+        pygame.draw.rect(self.e_badge, _TEAL, (_kx + 2, _ky + 2, 3, 1))
+        self.e_badge.blit(_key_surf,
+                          (_kx + (_key_sz - _key_surf.get_width())  // 2,
+                           _ky + (_key_sz - _key_surf.get_height()) // 2))
+
+        # Hint text
+        self.e_badge.blit(_hint_surf,
+                          (_kx + _key_sz + _pad,
+                           _ky + (_key_sz - _hint_surf.get_height()) // 2))
+        # ─────────────────────────────────────────────────────────────────
 
         self.walls       = []
         self.instruments = []
@@ -168,24 +226,29 @@ class MusicLevel:
             self.inventory.add_item(item)
 
     def drawing_e(self):
-        # 1. Get a shifting offset based on time
-        # pygame.time.get_ticks() gives us the time in milliseconds
-        # We divide by 200 to control the speed of the bobbing
-        bobbing_offset = math.sin(pygame.time.get_ticks() / 200) * 8
+        """Draw the music-themed E badge directly on screen above the player.
 
+        Drawn after group.draw() so it always sits above every tile layer.
+        """
         near_instrument = self.get_colliding_item(self.instruments)
         near_podium     = self.podium      and self.player.feet.colliderect(self.podium)
         near_guitar     = self.guitar_zone and self.player.feet.colliderect(self.guitar_zone)
-        if near_instrument or near_podium or near_guitar:
-            # Position the E sprite relative to the player's WORLD coordinates
-            # Pyscroll will automatically scale this by 3x and offset it for the camera
-            self.e_sprite.rect.midbottom = (
-                self.player.rect.centerx + bobbing_offset, 
-                self.player.rect.top - 10
-            )
-        else:
-            # Hide it when not near anything
-            self.e_sprite.rect.topleft = (-500, -500)
+        if not (near_instrument or near_podium or near_guitar):
+            return
+
+        zoom   = 3
+        sw, sh = self.screen.get_size()
+        bob    = math.sin(pygame.time.get_ticks() / 200) * 5
+
+        # Player is always at screen centre; convert world offset to screen offset
+        badge_screen_x = sw // 2
+        badge_screen_y = (sh // 2
+                          + (self.player.rect.top - self.player.rect.centery) * zoom
+                          - 12 + bob)
+
+        badge = self.e_badge
+        self.screen.blit(badge, (badge_screen_x - badge.get_width() // 2,
+                                 badge_screen_y - badge.get_height()))
 
     def play_next_challenge(self):
         """Play the next instrument sound in the fixed sequence."""
