@@ -86,24 +86,29 @@ class Level1:
         self.font = pygame.font.Font("fonts/Pixel Emulator.otf", 36)
 
         # ── E badge (drawn directly to screen, above all tile layers) ──────
+        _GOLD        = (255, 215,  0, 255)   # bright gold
+        _GOLD_DIM    = (180, 140,  0, 220)   # darker gold border
+        _GOLD_BG     = ( 40,  28,  0, 180)   # near-black warm background
+        _GOLD_KEY    = ( 70,  50,  0, 230)   # key box fill
+        _GOLD_TEXT   = (255, 223, 80, 255)   # slightly warm white for text
         _badge_font  = pygame.font.Font("fonts/Pixel Emulator.otf", 18)
-        _key_surf    = _badge_font.render("E", True, (255, 255, 255))
-        _hint_surf   = _badge_font.render("  interact", True, (190, 190, 210))
+        _key_surf    = _badge_font.render("E", True, _GOLD_TEXT)
+        _hint_surf   = _badge_font.render("  interact", True, _GOLD_TEXT)
         _pad         = 7
-        _key_sz      = _key_surf.get_height() + _pad * 2       # square key box
+        _key_sz      = _key_surf.get_height() + _pad * 2
         _badge_w     = _key_sz + _hint_surf.get_width() + _pad * 3
         _badge_h     = _key_sz + _pad * 2
         self.e_badge = pygame.Surface((_badge_w, _badge_h), pygame.SRCALPHA)
         # pill background
-        pygame.draw.rect(self.e_badge, (10, 10, 20, 170),
+        pygame.draw.rect(self.e_badge, _GOLD_BG,
                          (0, 0, _badge_w, _badge_h), border_radius=10)
-        pygame.draw.rect(self.e_badge, (100, 100, 160, 220),
+        pygame.draw.rect(self.e_badge, _GOLD,
                          (0, 0, _badge_w, _badge_h), width=2, border_radius=10)
         # key box
         _kx = _pad;  _ky = _pad
-        pygame.draw.rect(self.e_badge, (50, 50, 80, 230),
+        pygame.draw.rect(self.e_badge, _GOLD_KEY,
                          (_kx, _ky, _key_sz, _key_sz), border_radius=5)
-        pygame.draw.rect(self.e_badge, (160, 160, 220, 255),
+        pygame.draw.rect(self.e_badge, _GOLD_DIM,
                          (_kx, _ky, _key_sz, _key_sz), width=2, border_radius=5)
         self.e_badge.blit(_key_surf,
                           (_kx + (_key_sz - _key_surf.get_width())  // 2,
