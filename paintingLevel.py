@@ -120,7 +120,7 @@ class PaintingLevel:
             },
             "TheSchoolOfAthens": {
                 "clue": "Find Raphael's grand fresco of ancient Greek philosophers gathered beneath sweeping arches.",
-                "image_path": "images/paintings/TheSchoolOfAthens.jpg",
+                "image_path": "images/paintings/TheSchoolOfAthens.png",
             },
             "TheLambAmongWolves": {
                 "clue": "Look for the innocent lamb surrounded by predators in this allegorical scene.",
