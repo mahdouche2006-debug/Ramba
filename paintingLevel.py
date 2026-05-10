@@ -326,7 +326,9 @@ class PaintingLevel:
             self.player.canMove = True
 
         elif clicked_button_index == 0: # They clicked "This is it"
-            actual_name = self.get_colliding_painting_name()
+            # Use the name saved when E was pressed — avoids re-checking collision
+            # (painting rect may be thin, feet may no longer overlap when button is clicked)
+            actual_name = getattr(self, 'current_painting_name', self.get_colliding_painting_name())
             target_name = self.masterpieces[self.current_target_index]
 
             if actual_name == target_name:
@@ -339,8 +341,10 @@ class PaintingLevel:
                 # Add the found painting to the inventory
                 img_path = self.paintings_data[actual_name]["image_path"]
                 try:
-                    img = pygame.image.load(img_path).convert()
-                except Exception:
+                    raw = pygame.image.load(img_path)
+                    img = raw.convert_alpha() if img_path.lower().endswith(".png") else raw.convert()
+                except Exception as e:
+                    print(f"[ERROR] Inventory image load failed for '{actual_name}': {e}")
                     img = pygame.Surface((1, 1))
                 self.inventory.add_item(_FoundPainting(actual_name, img))
                 print("Correct!")
@@ -444,13 +448,16 @@ class PaintingLevel:
                 return
             img_path = self.paintings_data[p_name]["image_path"]
             try:
-                # Use convert() — safe for jpg/webp/png (no alpha channel required)
-                self.current_ui = PaintingUI(pygame.image.load(img_path).convert())
+                raw = pygame.image.load(img_path)
+                # Use convert_alpha for PNGs (preserves channel), convert for the rest
+                img_surf = raw.convert_alpha() if img_path.lower().endswith(".png") else raw.convert()
+                self.current_ui = PaintingUI(img_surf)
                 self.is_viewing_painting = True
                 self.player.canMove = False
                 self.current_painting_name = p_name
-            except (pygame.error, FileNotFoundError) as e:
-                print(f"Error loading painting '{p_name}': {e}")
+                print(f"Loaded painting '{p_name}' from {img_path}")
+            except Exception as e:
+                print(f"[ERROR] Could not load painting '{p_name}' from '{img_path}': {e}")
             
     def update(self, events):
         self.player.save_location()
@@ -514,20 +521,32 @@ class PaintingLevel:
 
                 if event.key == pygame.K_q:
                     pygame.quit()
-                
+
                 if event.key == pygame.K_i:
                     self.open_inventory()
+
+                # ── Painting UI keyboard navigation ───────────────────────
+                if self.is_viewing_painting and self.current_ui.clicked_index is None:
+                    if event.key == pygame.K_LEFT:
+                        self.current_ui.selected_index = (self.current_ui.selected_index - 1) % 2
+                    elif event.key == pygame.K_RIGHT:
+                        self.current_ui.selected_index = (self.current_ui.selected_index + 1) % 2
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        # Confirm: treat selected button centre as a click position
+                        btn = self.current_ui.button_rects[self.current_ui.selected_index]
+                        self.check_painting_choice(btn.center)
+                # ─────────────────────────────────────────────────────────
 
             if event.type == pygame.MOUSEBUTTONDOWN and self.is_viewing_painting:
                 # This checks if they clicked the "This is it" button
                 self.check_painting_choice(event.pos)
 
         if self.paintings_found == len(self.masterpieces):
-            self.ending_the_level(["Congratulations! You've found all the masterpieces!", "Press c to return to world map..."])
+            self.ending_the_level(["Congratulations! You found all the masterpieces.", "You have a true eye for art."])
             self.game.map = "world" # Return to world map after ending
             self.game.painting_level_completed = True
 
         if self.lives <= 0:
-            self.ending_the_level(["You've lost all your lives!", "Game Over.", ";)", ":)", "                  :)"])
+            self.ending_the_level(["You've lost all your lives.", "Game Over."])
             self.game.map = "world" # Return to world map after ending
 

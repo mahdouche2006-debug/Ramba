@@ -53,6 +53,10 @@ class Level1:
             elif obj.type == "sculpture":
                 sculpture = Item(f"sculptures/{obj.name}", obj.x, obj.y, False)
                 sculpture.name = obj.name  # restore real name for enigma lookup
+                # Use the full TMX bounding box for hit-detection so the player
+                # can trigger interaction from anywhere inside the drawn zone,
+                # not just the tiny 20×20 top-left corner that Item defaults to.
+                sculpture.rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
                 # Keep original image for inventory display, then blank the sprite
                 sculpture.display_image = sculpture.image.copy()
                 sculpture.image = pygame.Surface(sculpture.rect.size, pygame.SRCALPHA)
@@ -453,12 +457,12 @@ class Level1:
         self.screen.blit(label, (box_x + pad, box_y + pad))
         # return to world when all items are collected
         if self.items_collected == 6:
-            self.ending_the_level(["You found all the items!", "Press c to return to world map..."])
+            self.ending_the_level(["Well done! You found all the items.", "The museum is proud of you."])
             self.game.map = "world"
             self.game.level1_completed = True
 
         if self.timer.remaining_time <= 0:
-            self.ending_the_level(["Time's up! Returning to world map..."])
+            self.ending_the_level(["Time's up!", "Better luck next time."])
             self.game.map = "world"
 
         

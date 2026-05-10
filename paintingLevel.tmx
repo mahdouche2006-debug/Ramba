@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="100" height="70" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="461">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="100" height="70" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="478">
  <tileset firstgid="1" source="map2.tsx"/>
  <tileset firstgid="6145" name="try" tilewidth="16" tileheight="16" tilecount="4096" columns="64">
   <image source="pixel art/ChatGPT Image 28 mars 2026, 03_40_45.png" width="1024" height="1024"/>
@@ -218,7 +218,7 @@
   <object id="445" type="obj" x="312.25" y="257" width="20.5" height="11.75"/>
   <object id="446" type="obj" x="1154" y="313.75" width="38.25" height="48"/>
   <object id="449" type="obj" x="1348.25" y="490" width="40.75" height="61.5"/>
-  <object id="451" name="Monalisa" type="painting" x="1160.33" y="847" width="41.6667" height="37.6667"/>
+  <object id="451" name="MonaLisa" type="painting" x="1160.33" y="847" width="41.6667" height="37.6667"/>
   <object id="452" type="obj" x="207.5" y="542" width="39.25" height="48.75"/>
   <object id="453" type="obj" x="269" y="633.75" width="124.5" height="21"/>
   <object id="455" type="obj" x="1445.67" y="322.333" width="32.6667" height="16.3333"/>
@@ -227,6 +227,25 @@
   <object id="458" type="obj" x="607.5" y="926" width="40.5" height="37"/>
   <object id="459" type="obj" x="907" y="936.5" width="117" height="50.5"/>
   <object id="460" type="obj" x="946" y="929" width="39.5" height="33"/>
+  <object id="461" name="player" x="798" y="886">
+   <point/>
+  </object>
+  <object id="462" name="board" x="858" y="950" width="44.6667" height="53.3333"/>
+  <object id="463" name="TheScream" type="painting" x="1082.25" y="558.25" width="36" height="24"/>
+  <object id="464" name="GirlWithAPearlEarring" type="painting" x="1027.33" y="846.667" width="48" height="40"/>
+  <object id="465" name="AFriendInNeed" type="painting" x="248.333" y="539" width="62.3333" height="40.3333"/>
+  <object id="466" name="Anguish" type="painting" x="104" y="847.333" width="55.3333" height="50.6667"/>
+  <object id="467" name="IvanTheTerribileAndHisSon" type="painting" x="1359.67" y="271" width="61" height="43.3333"/>
+  <object id="468" name="LesSaltimbanques" type="painting" x="1297" y="272.333" width="59" height="43.3333"/>
+  <object id="469" name="LibertyLeadingThePeople" type="painting" x="1057" y="246" width="56.3333" height="38.3333"/>
+  <object id="470" name="LOrphelin" type="painting" x="175" y="839.667" width="43" height="33.3333"/>
+  <object id="471" name="NapoleonCrossingTheAlps" type="painting" x="999.333" y="209" width="47.3333" height="64.3333"/>
+  <object id="472" name="SelfPortraitWithDeathPlayingTheFiddle" type="painting" x="1418.67" y="511.667" width="25" height="34"/>
+  <object id="473" name="TheCreationOfAdam" type="painting" x="487.333" y="556" width="41.6667" height="48.6667"/>
+  <object id="474" name="TheBirthOfVenus" type="painting" x="424.333" y="563" width="49.3333" height="41.6667"/>
+  <object id="475" name="TheSchoolOfAthens" type="painting" x="437" y="848" width="117" height="32"/>
+  <object id="476" name="TheStarryNight" type="painting" x="1124" y="557" width="34" height="25"/>
+  <object id="477" name="TheGreatWaveOffKanagawa" type="painting" x="1270" y="844" width="70" height="30"/>
  </objectgroup>
  <layer id="4" name="onTop" width="100" height="70">
   <data encoding="csv">

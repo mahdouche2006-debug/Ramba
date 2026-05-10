@@ -41,7 +41,7 @@
   <object id="4" type="obj" x="388.666" y="488.417" width="36" height="221.583"/>
   <object id="8" type="obj" x="118.667" y="500" width="113.333" height="64"/>
   <object id="9" type="obj" x="114.667" y="329.333" width="240.667" height="55.3333"/>
-  <object id="10" type="obj" x="286.083" y="388.25" width="62" height="38"/>
+  <object id="10" type="obj" x="286.265" y="352.523" width="70" height="74.8182"/>
   <object id="11" type="obj" x="111.333" y="686" width="296" height="28"/>
   <object id="12" type="obj" x="348" y="652.666" width="29.3333" height="25.3334"/>
   <object id="13" type="obj" x="295.333" y="650.667" width="30" height="32"/>
@@ -110,7 +110,7 @@
   <object id="84" type="obj" x="298" y="655.333" width="23.3333" height="5.33333"/>
   <object id="85" type="obj" x="200.667" y="655.333"/>
   <object id="86" type="obj" x="200" y="653.333" width="21.3333" height="11.3333"/>
-  <object id="87" name="player" x="674" y="758">
+  <object id="87" name="player" x="671.5" y="699">
    <point/>
   </object>
   <object id="88" type="obj" x="645.333" y="494" width="54" height="14"/>
@@ -132,12 +132,12 @@
   <object id="126" type="obj" x="348.25" y="440" width="46.25" height="12.25"/>
   <object id="128" type="obj" x="347.25" y="451.75" width="40" height="5"/>
   <object id="129" type="obj" x="346.75" y="457.5" width="31.75" height="4.5"/>
-  <object id="130" name="ChristTheRedeemer" type="sculpture" x="1062.33" y="209.5" width="53.6667" height="33"/>
-  <object id="133" name="Medusa" type="sculpture" x="235.333" y="618" width="48.3333" height="31.3333"/>
-  <object id="134" name="VenusDeMilo" type="sculpture" x="1152.5" y="533.5" width="46.5" height="34"/>
+  <object id="130" name="ChristTheRedeemer" type="sculpture" x="1062.33" y="224.833" width="53.6667" height="33"/>
+  <object id="133" name="Medusa" type="sculpture" x="221.5" y="565.667" width="77.0606" height="114.333"/>
+  <object id="134" name="VenusDeMilo" type="sculpture" x="1133" y="533.5" width="66" height="34"/>
   <object id="135" name="Pieta" type="sculpture" x="1120" y="259.333" width="88" height="28.6667"/>
-  <object id="136" name="David" type="sculpture" x="644.667" y="522.667" width="57.3333" height="48.6667"/>
-  <object id="137" name="TheThinker" type="sculpture" x="279.333" y="392" width="64.6667" height="50"/>
+  <object id="136" name="David" type="sculpture" x="642.667" y="544" width="57.3333" height="48.6667"/>
+  <object id="137" name="TheThinker" type="sculpture" x="275.424" y="361.818" width="73.5758" height="84.5455"/>
  </objectgroup>
  <layer id="3" name="onTop" width="40" height="26">
   <data encoding="csv">

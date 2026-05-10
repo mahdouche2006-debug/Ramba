@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import pytmx
 import pyscroll
@@ -43,9 +45,16 @@ class Game:
         # by default world
         self.map = "world"
 
+        # Position to restore when returning from a level to the world map
+        self._level_return_pos = None
+
+        # Timestamp (ms) after which door entry is allowed again.
+        # Set to now+3000 after every level exit so the player has time to walk away.
+        self._door_blocked_until = 0
+
         self.current_level = None
 
-        # create boolean for each level to know if the payer won the level or not
+        # create boolean for each level to know if the player won the level or not
         self.level1_completed = False
         self.painting_level_completed = False
         self.music_level_completed = False
@@ -59,13 +68,13 @@ class Game:
         for obj in tmx_data.objects:
             if obj.type == "obj":
                 self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-            
+
             if obj.type == "side_stairs":
-                self.side_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height)) 
+                self.side_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
             if obj.type == "front_stairs":
-                self.front_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))  
-            
+                self.front_stairs.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+
             if obj.type == "door":
                 self.doors.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
 
@@ -75,6 +84,57 @@ class Game:
         # dessiner le groupe de calque
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=5)
         self.group.add(self.player)
+
+        # Pre-build the "Level Complete!" badge drawn above completed-level doors
+        self._win_badge = self._build_win_badge()
+
+    # ------------------------------------------------------------------ #
+    #  Badge builder
+    # ------------------------------------------------------------------ #
+    def _build_win_badge(self):
+        """Build a gold-bordered 'Level Complete!' badge surface."""
+        font = pygame.font.Font("fonts/Pixel Emulator.otf", 16)
+
+        _BG    = (  5,  35,   5, 210)   # dark green background
+        _GOLD  = (255, 215,   0, 255)   # gold outer border
+        _GREEN = ( 20, 170,  20, 255)   # bright green inner border
+        _TEXT  = (210, 255, 210, 255)   # light green text
+
+        _msg = font.render("Level Complete!", True, _TEXT)
+        _pad = 8
+        _w   = _pad + _msg.get_width()  + _pad
+        _h   = _msg.get_height() + _pad * 2
+
+        surf = pygame.Surface((_w, _h), pygame.SRCALPHA)
+        pygame.draw.rect(surf, _BG,    (0, 0, _w, _h))
+        pygame.draw.rect(surf, _GOLD,  (0, 0, _w, _h), 2)
+        pygame.draw.rect(surf, _GREEN, (3, 3, _w - 6, _h - 6), 1)
+        surf.blit(_msg, (_pad, _pad))
+        return surf
+
+    def _draw_completion_badge(self):
+        """Draw a bobbing 'Level Complete!' badge above the player when they
+        are standing next to a door for a level they have already finished."""
+        # Build a list of door rects whose level is completed
+        completed_doors = []
+        if self.level1_completed          and len(self.doors) > 0: completed_doors.append(self.doors[0])
+        if self.painting_level_completed  and len(self.doors) > 1: completed_doors.append(self.doors[1])
+        if self.music_level_completed     and len(self.doors) > 2: completed_doors.append(self.doors[2])
+
+        if not any(self.player.feet.colliderect(d) for d in completed_doors):
+            return
+
+        zoom = 3
+        sw, sh = self.screen.get_size()
+        bob    = math.sin(pygame.time.get_ticks() / 220) * 5
+
+        badge = self._win_badge
+        bx = sw // 2 - badge.get_width() // 2
+        by = (sh // 2
+              + (self.player.rect.top - self.player.rect.centery) * zoom
+              - badge.get_height() - 6
+              + bob)
+        self.screen.blit(badge, (bx, int(by)))
 
     # ------------------------------------------------------------------ #
     #  Music helpers
@@ -115,7 +175,7 @@ class Game:
             dy -= 1
             self.player.direction = "up"
             self.player.walking = True
-            
+
             if self.check_collision_with_list(self.front_stairs):
                 dy += stairs_deviation
 
@@ -136,7 +196,7 @@ class Game:
             if self.check_collision_with_list(self.side_stairs):
                 dy += stairs_deviation
                 dx += stairs_deviation
-                
+
         elif keys[pygame.K_RIGHT]:
             dx += 1
             self.player.direction = "right"
@@ -160,7 +220,7 @@ class Game:
 
         # update animation
         self.player.animate()
-    
+
     def check_collision_with_door(self, item):
         return self.player.feet.colliderect(item)
 
@@ -204,61 +264,74 @@ class Game:
             dialogue.draw(self.screen)
             pygame.display.flip()
 
-    def try_enter_level(self, level_name, level_class, completed_flag, msg, timer_val=None):
-        if not completed_flag:
-            self.display_entering_message(msg)
-            self.map = level_name
-            
-            # Move player so they aren't on the door when they return
-            if level_name == "level1":
-                self.player.position[0] -= 30
-            else:
-                self.player.position[1] += 30 
-            
-            # Initialize the level
-            if timer_val:
-                timer = CountdownTimer(timer_val)
-                self.current_level = level_class(timer, self.screen, self)
-            else:
-                self.current_level = level_class(self.screen, self)
-        else:
-            self.display_entering_message(["You already completed this!", "Go explore!"])
-            if level_name == "level1":
-                self.player.position[0] -= 30
-            else:
-                self.player.position[1] += 30
-    
-    def update_world(self):
+    def try_enter_level(self, level_name, level_class, msg, timer_val=None):
+        """Enter a level that has NOT yet been completed.
 
+        Only call this when the level's completed flag is False —
+        completed doors are handled separately (badge shown, no entry).
+        """
+        # Move player off the door so they don't re-trigger it on return
+        if level_name == "level1":
+            self.player.position[0] -= 30
+        else:
+            self.player.position[1] += 30
+
+        # Save this position — restored when the level exits back to world
+        self._level_return_pos = [self.player.position[0], self.player.position[1]]
+
+        self.display_entering_message(msg)
+        self.map = level_name
+
+        # Initialize the level
+        if timer_val:
+            timer = CountdownTimer(timer_val)
+            self.current_level = level_class(timer, self.screen, self)
+        else:
+            self.current_level = level_class(self.screen, self)
+
+    def update_world(self):
         self.player.save_location()
         self.handle_input()
         self.group.update()
         self.group.center(self.player.rect)
         self.group.draw(self.screen)
-        
+
         if self.check_collision_with_list(self.walls):
             self.player.move_back()
 
-        # --- DOOR COLLISIONS (Cleaned up using the helper) ---
-        
+        # Draw "Level Complete!" badge near completed doors (above world tiles)
+        self._draw_completion_badge()
+
+        # ── Door collisions ────────────────────────────────────────────────
+        # Gates:
+        #   • completed doors → badge shown above, no re-entry
+        #   • cooldown active → just returned from a level, give player time to walk away
+        doors_open = pygame.time.get_ticks() >= self._door_blocked_until
+
         if self.check_collision_with_door(self.doors[0]):
-            self.music.stop()
-            self.try_enter_level("level1", Level1, self.level1_completed, ["Welcome!", "stuck!"], 40)
+            if not self.level1_completed and doors_open:
+                self.music.stop()
+                self.try_enter_level("level1", Level1,
+                                     ["Welcome to the museum.", "Do not take your time."], 40)
 
         if self.check_collision_with_door(self.doors[1]):
-            self.music.stop()
-            self.try_enter_level("paintingLevel", PaintingLevel, self.painting_level_completed, ["Art Gallery!", "Look Closely, and find all 5 paintings!"])
+            if not self.painting_level_completed and doors_open:
+                self.music.stop()
+                self.try_enter_level("paintingLevel", PaintingLevel,
+                                     ["Welcome to the gallery.", "Read carefully."])
 
         if self.check_collision_with_door(self.doors[2]):
-            self.music.stop()
-            self.try_enter_level("musicLevel", MusicLevel, self.music_level_completed, ["Music Hall!", "Listen closely."])
+            if not self.music_level_completed and doors_open:
+                self.music.stop()
+                self.try_enter_level("musicLevel", MusicLevel,
+                                     ["Welcome to the music hall.", "Listen carefully and be attentive."])
 
         # --- TUNNEL COLLISIONS ---
         if self.check_collision_with_tunnel(self.tunnels[0]):
             self.display_entering_message(["Entering the tunnel...", "Be careful!"])
             self.player.position[0] = self.tunnel2.x
             self.player.position[1] = self.tunnel2.y - 54
-        
+
         if self.check_collision_with_tunnel(self.tunnels[1]):
             self.display_entering_message(["Leaving the tunnel...", "You were lucky!"])
             self.player.position[0] = self.tunnel1.x
@@ -269,33 +342,55 @@ class Game:
         fps = 60
 
         running = True
-        
+        prev_map = "world"   # map value at the START of the previous frame
+
         while running:
+            # Snapshot map BEFORE any update runs this frame.
+            # update() may change self.map mid-frame; we compare against this
+            # snapshot next frame to detect the level→world transition correctly.
+            frame_start_map = self.map
+
             events = pygame.event.get()
-            
+
             pygame.mouse.set_visible(False)
-            
+
             if self.map == "world":
+                # ── Returning from a level this frame ─────────────────────
+                if prev_map != "world" and self._level_return_pos is not None:
+                    # Restore world-map position
+                    self.player.position[0] = self._level_return_pos[0]
+                    self.player.position[1] = self._level_return_pos[1]
+                    self.player.rect.topleft = self.player.position
+                    self.player.canMove = True   # level may have left this False
+                    self._level_return_pos = None
+
+                    # 3-second cooldown — prevents the door from immediately
+                    # re-triggering on the first frame back in the world map.
+                    # This also acts as the "buffer time after losing" before
+                    # the player can re-enter.
+                    self._door_blocked_until = pygame.time.get_ticks() + 3000
+                # ──────────────────────────────────────────────────────────
+
                 # Fade world music back in whenever we return from a level
-                # (or after a tunnel transition faded it out)
                 if not self._world_music_active:
                     self._music_start_world()
                 self.update_world()
 
             else:
                 if self.current_level:
-                    self.current_level.update(events)
-            
+                    self.current_level.update(events)  # may set self.map = "world"
+
             for event in events:
                 if event.type == pygame.QUIT:
                     running = False
-                
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         running = False
 
             pygame.display.update()
-
+            # Save the start-of-frame snapshot (NOT self.map which may have changed)
+            prev_map = frame_start_map
             clock.tick(fps)
 
         pygame.quit()

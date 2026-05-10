@@ -33,7 +33,10 @@ class PaintingUI:
         self.shake_timer = 0
         self.shake_offset = 0
         self.is_correct = False
-        
+
+        # Keyboard navigation — 0 = "Choose", 1 = "Go Back"
+        self.selected_index = 0
+
         # 4. Colors
         self.default_brown = [60, 40, 30]
         self.target_gold = [218, 165, 32]
@@ -65,20 +68,27 @@ class PaintingUI:
 
         # Draw Buttons
         for i, name in enumerate(self.options):
+            btn_rect = self.button_rects[i].copy()
+
             if i == self.clicked_index:
                 color = (0, 180, 50) if self.is_correct else (220, 20, 60)
+                btn_rect.x += self.shake_offset
             else:
-                is_hover = self.button_rects[i].collidepoint(mouse_pos) and self.clicked_index is None
-                target = self.target_gold if is_hover else self.default_brown
+                # Highlight on mouse hover OR keyboard selection
+                is_highlighted = (
+                    self.clicked_index is None and
+                    (self.button_rects[i].collidepoint(mouse_pos) or i == self.selected_index)
+                )
+                target = self.target_gold if is_highlighted else self.default_brown
                 for j in range(3):
                     self.current_colors[i][j] += (target[j] - self.current_colors[i][j]) * 0.15
                 color = tuple(self.current_colors[i])
 
             text_surf = self.font.render(name, True, color)
-            btn_rect = self.button_rects[i].copy()
-            if i == self.clicked_index:
-                btn_rect.x += self.shake_offset
-            
             screen.blit(text_surf, text_surf.get_rect(center=btn_rect.center))
+
+            # Gold outline around the keyboard-focused button
+            if i == self.selected_index and self.clicked_index is None:
+                pygame.draw.rect(screen, (255, 215, 0), btn_rect.inflate(6, 6), width=3, border_radius=6)
         
         return should_close
