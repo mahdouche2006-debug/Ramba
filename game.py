@@ -312,7 +312,7 @@ class Game:
             if not self.level1_completed and doors_open:
                 self.music.stop()
                 self.try_enter_level("level1", Level1,
-                                     ["Welcome to the museum.", "Do not take your time."], 40)
+                                     ["Welcome to the museum.", "Do not take your time."], 60)
 
         if self.check_collision_with_door(self.doors[1]):
             if not self.painting_level_completed and doors_open:
